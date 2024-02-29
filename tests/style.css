@@ -1,0 +1,30 @@
+body {
+    display: grid;
+    place-items: center;
+    gap: 2em;
+}
+
+.box {
+    border: 1px solid red;
+    padding: 2em;
+    border-radius: 20px;
+    height: fit-content;
+    display: grid;
+    place-items:  center;
+    gap: 1em;
+    
+}
+
+.box > div {
+    border: 1px solid gray;
+    padding: 1em;
+    border-radius: 10px;
+    background: rgb(194, 246, 164);
+}
+
+.box > div > div {
+    border: 1px solid rgb(255, 255, 255);
+    background: rgb(241, 120, 120);
+    border-radius: 2px;
+    padding: 2px;
+}
