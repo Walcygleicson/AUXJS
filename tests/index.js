@@ -1,9 +1,19 @@
 import __ from "../@/@internal.js";
 import dom from "../modules/dom.js";
 
-const el = document.getElementById('one')
+const one = document.getElementById('one')
 const two = document.getElementById('two')
 
-const box = dom('.box, .el')
+const o = {a: 'foo', b: 'bar', bla: true,num: 34}
+const str = 'foo, bar'
+const ar = ['foo', 'bar']
 
-box.console
+const el = dom('.two, .one')
+
+el.addClass('caty')
+.appendChilds('#tree > div', '#ch-c')
+
+
+
+
+el.console()

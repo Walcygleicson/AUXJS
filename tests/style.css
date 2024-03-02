@@ -28,3 +28,13 @@ body {
     border-radius: 2px;
     padding: 2px;
 }
+
+#x-0, #x-1, #x-2 {
+    background: rgb(252, 235, 102);
+    padding: .5em;
+}
+
+#tree {
+    padding: 1em;
+    background: rgb(194, 244, 220);
+}
