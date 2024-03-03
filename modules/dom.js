@@ -1,5 +1,8 @@
 import __ from "../@/@internal.js";
+import("../@/@docs.js")
 "use strict"
+
+const NUMB = 999999999
 
 
 /**
@@ -11,7 +14,7 @@ import __ from "../@/@internal.js";
  * --------
  * * Aponta para elementos HTML (ou os obtém) e fornece métodos para manipulação do mesmo.
  * 
- * @param {string|HTMLElement|Array<string|HTMLElement>|NodeList|HTMLCollection} elements
+ * @param {ElementReference} elements
  * > * Deve receber qualquer objeto que faça referência ou aponte para um ou mais elementos HTML.
  * > ------------
  * > * Um HTMLElement.
@@ -76,7 +79,7 @@ export default function dom(elements) {
      * @param {string|Array<string>} classNames Uma string que represente um nome de classe ou múltiplos nomes de classe separados por vírgula. Pode receber um Array com strings que representem nomes de classe.
      * @param {number} pos (opcional) Um número que represente a posição (index) em que os nomes serão adicionados na lista de classe.
      */
-    dom.addClass = function (classNames, pos = 10000) {
+    dom.addClass = function (classNames, pos = NUMB) {
         __.err('dom.addClass')
             .to(classNames, 'string, array, object')
             .isVoid(classNames)
@@ -108,20 +111,22 @@ export default function dom(elements) {
      * * Se o elemento inserido for filho de outro nó, este então é removido de seu nó pai e inserido no elemento alvo, senão é apenas inserido no elemento alvo.
      * 
      * ------
-     * @param {HTMLElement|string|Array<string|HTMLElement>|NodeList|HTMLCollection} nodes Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
+     * @param {ElementReference} nodes Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
      * @param {number} posRef (opcional) Um número que represente a posição (index) em que os elementos filhos serão inseridos. O nó filho que ocupava anteriormente o index especificado é empurrado para frente dando espaço para os novos elementos. Se senhum argumento for passado os elementos serão inseridos ao final da lista de nós filhos.
+     * @param {(tools:ElementTools, done: Function)=>void} handler (opcional) Executa uma função para cada elemento passado antes da operação ser concluída. O elemento atual só será inserido no novo elemento pai ao invocar a função **done( )**. Recebe dois parâmetros: **tools** e **done**.
      */
-    dom.appendChilds = function (nodes, posRef = 10000, handler = Function) {
+    dom.appendChilds = function (nodes, handler = Function, posRef = NUMB) {
         
         //Reorganizar argumento pulável - Passar uma função passada em posRef para handler
-        if (__.type(posRef) == 'function' && handler == Function) {
-            handler = posRef
-            posRef = 10000
+        if (__.type(handler) == 'number' && posRef === NUMB) {
+            posRef = handler
+            handler = Function
         }
 
         const err = __.err('dom.appendChilds')
         err.to(nodes, 'HTMLElement, HTMLSelector, elementList')
             .isVoid(nodes)
+            .to(handler, 'function', false)
             .to(posRef, 'number, HTMLElement, HTMLSelector', false)
             .done()
         
@@ -136,7 +141,11 @@ export default function dom(elements) {
                     break
                 case 'string':
                     x.nodeRef = parent.querySelector(posRef)
+                    break
+                case 'HTMLElement':
+                    x.nodeRef = posRef.parentElement == parent? posRef : null
             }
+
             nodes.forEach((child) => {
                 parent.insertBefore(child, x.nodeRef)
                 
