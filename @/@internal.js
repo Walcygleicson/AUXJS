@@ -340,7 +340,11 @@ __.err = function (thisName) {
     }
 
 
-
+    /**
+     * * Lança um erro se uma função done() não for executada
+     * @param {boolean} done Se **true** o erro é lançado
+     * @param {number} param O parametro do erro
+     */
     fn.notDone = function (done = false, param = 1) {
         try {
             if (!done) {
@@ -357,6 +361,48 @@ __.err = function (thisName) {
     }
 
     return fn
+}
+
+
+//////////////////////////////
+/**
+ * * Buspa por um elemento em uma lista através do índice, seletor ou o proprio elemento como referência e retorna este elemento se for econtrado. Se a referencia passado não econtrar o elemento na lista o retorno é null
+ * 
+ * @param {number|string|HTMLElement} ref Uma referencia do elemento na lista. Pode ser sua posição (index), seletor ou o elemento 
+ * @param {Array<HTMLElement>} list A lista de elementos para a busca
+ * @param {HTMLElement|document} root Um elemento no qual inidicar a busca por seletor
+ * @param {boolean} getIndex Se true o retorno é o índice do elemento na lista
+ */
+__.indexRef = function (ref, list, root = null, getIndex = false) {
+    
+    switch (__.type(ref)) {
+        case "number":
+            x.nodeRef = list[ref] || null;
+            break;
+        case "string":
+            root = root == null? document : root
+            //Busca feita em document
+            if (root == document) {
+                //Obter apenas o primeiro elemento que estiver presente em list
+                x.nodeRef = [...root.querySelectorAll(ref)].filter((e) => {
+                    return list.includes(e)? e : null
+                })[0] || null
+
+            } else {
+                x.nodeRef = root.querySelector(ref);
+            }
+
+            break;
+        case "HTMLElement":
+            //Verificar se a referência passada existe na lista
+            x.nodeRef = list.includes(ref) ? ref : null;
+    }
+
+    if (getIndex) {
+        return list.indexOf(x.nodeRef) < 0? null : list.indexOf(x.nodeRef)
+    }
+
+    return x.nodeRef
 }
 
 

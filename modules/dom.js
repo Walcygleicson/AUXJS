@@ -39,7 +39,7 @@ export default function dom(elements) {
     /**
      * * Percorre os elementos raiz
      * @param {Function} fn Executar uma função para cada elemento
-     * @param {number} index Especificar índice de qual elemento trabalhar
+     * @param {number} index Especificar índice de qual elemento trabalhar. Se o index especificado for maior que a quantidade de elementos o valor é setado para 0
      */
     function to(fn, index) {
         if (elements.length > 1 && index === undefined) {
@@ -126,7 +126,7 @@ export default function dom(elements) {
      */
 
     dom.appendChilds = function (nodes, options = {}) {
-        const err = __.err("dom.appendChilds");
+        let err = __.err("dom.appendChilds");
 
         err.to(nodes, "HTMLElement, HTMLSelector, elementList")
             .isVoid(nodes)
@@ -135,7 +135,6 @@ export default function dom(elements) {
 
         nodes = __.ex(nodes, err);
         x.isDone = false //Indica se a função done foi executada
-        x.loop = true
        
             
         options = {
@@ -147,46 +146,42 @@ export default function dom(elements) {
 
         ///Lembrar - Validar erro de valor de propriedade options *******>>
 
-        to((parent) => {
 
-            //Lista de filhos sem atualização dos novos filhos inseridos
-            x.childList = [...parent.children]
+        nodes.forEach((child) => {
 
-            nodes.forEach((child) => {
-                //Buscar por nó de referencia
-                switch (__.type(options.position)) {
-                    case "number":
-                        x.nodeRef = x.childList[options.position];
-                        break;
-                    case "string":
-                        x.nodeRef = parent.querySelector(options.position);
-                        break;
-                    case "HTMLElement":
-                        //Verificar se a referência passada é um elemento filho do nó destino
-                        x.nodeRef = options.position.parentElement == parent ? options.position : null;
-                }
+            //Verificar se o root foi alterado pelo usuário
+            //Se sim, atualizar pai e lista de filhos 
+            if (elements[options.root] != x.parent) {
+                x.parent = elements[options.root];
+                x.childList = [...x.parent.children]; 
+            }
 
-            
-                x.done = () => { x.isDone = true; parent.insertBefore(child, x.nodeRef) }
-                
-                //Executar se uma callback function for passado
-                if (options.handler) {
-                    options.handler({}, x.done)
-                } else {
-                    x.done()
-                }
-            });
+            //Obter o elemento filho referência para o insertBefore
+            x.nodeRef = __.indexRef(options.position, x.childList, x.parent);
 
-        }, options.root);
-        
+            //Função done()
+            x.done = () => {
+                x.isDone = true;
+                x.parent.insertBefore(child, x.nodeRef);
+            };
+
+            //Executar se uma callback function for passado
+            if (options.handler) {
+                options.handler(2, x.done);
+            } else {
+                x.done();
+            }
+        });
+
         //Lançar erro se done() não for executada
         err.notDone(x.isDone, 2)
 
         delete x.childList
         delete x.nodeRef
-        delete x.loop
         delete x.isDone
         delete x.done
+        delete x.parent
+        err = null
         return this;
     };
 
