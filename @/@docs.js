@@ -12,6 +12,12 @@
  * @typedef {Array<Selector|HTMLElement>|NodeList|HTMLCollection} ElementList Uma lista de elementos HTML e/ou Seletores válidos. Pode ser um Array, um Object, um NodeList ou um HTMLCollection.
  */
 
+/**
+ * @callback _CallbackFunction
+ * @param {ElementTools} source 555
+ * @param {Function} done 555555
+ */
+
 /////////// INTERFACE ELEMENT TOOLS /////////////////////////
 
 /**

@@ -23,6 +23,8 @@ export class AUXCallbackSources {
         this.item = item
         this.i = 0
         this.event = event
+
+        deleteNotUsed(type, this)
     }
 };
 
@@ -33,8 +35,26 @@ export class AUXCallbackSources {
 class GetterProperties {
     constructor(item, type) {
         this.item = item
-        this.done = function done() { console.log('DONE()') }
-        
+        this.step = null
+        this.type = null
+        this.index = null
+        this.root = null
+        this.rootList = null
+        this.itemList = null
+        this.parent = null
+        this.id = null
+        this.class = null
+        this.classList = null
+        this.tagName = null
+        this.attrs = null
+        this.next = null
+        this.prev = null
+        this.childLength = null
+        this.childList = null
+        this.text = null
+        this.event = null
+        this.value = null
+        this.trigger = null
     }
 }
 
@@ -49,16 +69,16 @@ class DefinerMethods {
 }
 
 
-const delBase = {
-    dom: ['event'],
+////////////////////////////////////////////////////////
+const base = {
+    dom: [],
     obj: [],
-    evt: []
+    evt: ['event']
 }
 
 function deleteNotUsed(type, _this) {
-    switch (type) {
+    
+    if (type !== 'dom') {
         
-        case 'dom':
-
     }
 }

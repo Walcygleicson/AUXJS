@@ -26,46 +26,50 @@ const NUMB = 999999999
  * Nota: Qualquer valor que não seja ou não faça nenhum tipo de referência a algum elemento HTML resultará em um erro!
  */
 export default function dom(elements) {
-
     //Tratar erros de argumento
-    const error = __.err('dom')
-    error.to(elements, 'HTMLElement, HTMLSelector, elementList')
+    const error = __.err("dom");
+    error
+        .to(elements, "HTMLElement, HTMLSelector, elementList")
         .isVoid(elements, 1)
-        .done()
-    elements = __.ex(elements, error)
+        .done();
+    elements = __.ex(elements, error);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
-    
+
     function to(fn) {
         if (elements.length > 1) {
-            for (let i = 0; i < elements.length; i++){
-                fn(elements[i], i, elements)
+            for (let i = 0; i < elements.length; i++) {
+                fn(elements[i], i, elements);
             }
         } else {
-            fn(elements[0], 0, elements)
+            fn(elements[0], 0, elements);
         }
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
-    var x = {}
+    var x = {};
 
-    var dom = {}
+    var dom = {};
 
     ///////////// length ////////////////////
     /**
      * * Retorna a quantidade de elementos obtidos.
      * @type {number}
      */
-    dom.length = elements.length
-    
+    dom.length = elements.length;
+
     /////////////// console //////////////////
     /**
      * * Imprime no console do navegador os elementos obtidos.
      */
     dom.console = function () {
         elements.length > 1
-                ? (console.group("elementList (Array):"),console.log(elements),console.log(...elements)) : (console.group(elements[0].tagName + " Element:"), console.log(...elements));
-            console.groupEnd();
-    }
+            ? (console.group("elementList (Array):"),
+              console.log(elements),
+              console.log(...elements))
+            : (console.group(elements[0].tagName + " Element:"),
+              console.log(...elements));
+        console.groupEnd();
+    };
 
     /////////////////// addClass ///////////////
 
@@ -73,91 +77,132 @@ export default function dom(elements) {
      * * Adiciona um ou mais nomes de classe ao elemento alvo.
      * >
      * * Pode definir em qual posição os nomes de classe serão adiciondaos. Se n for definido os nomes serão adicionados ao final da lista de classe.
-     * 
+     *
      * -----
-     * 
+     *
      * @param {string|Array<string>} classNames Uma string que represente um nome de classe ou múltiplos nomes de classe separados por vírgula. Pode receber um Array com strings que representem nomes de classe.
      * @param {number} pos (opcional) Um número que represente a posição (index) em que os nomes serão adicionados na lista de classe.
      */
     dom.addClass = function (classNames, pos = NUMB) {
-        __.err('dom.addClass')
-            .to(classNames, 'string, array, object')
+        __.err("dom.addClass")
+            .to(classNames, "string, array, object")
             .isVoid(classNames)
-            .to(pos, 'number', false)
-            .done()
+            .to(pos, "number", false)
+            .done();
         //Separar nomes de classe por vírgula se passado uma string
-        classNames = __.arr(classNames, true)
-        
+        classNames = __.arr(classNames, true);
 
         to((e) => {
-            x.classList = [...e.classList]
-           
+            x.classList = [...e.classList];
+
             //Inserir na posição
-            x.classList.splice(pos, 0, ...classNames)
+            x.classList.splice(pos, 0, ...classNames);
 
             //Juntar e adicionar classes ao elemento
-            x.classList = x.classList.join(' ')
-            e.setAttribute('class', x.classList)
-            delete x.classList
-        })
+            x.classList = x.classList.join(" ");
+            e.setAttribute("class", x.classList);
+            delete x.classList;
+        });
 
-        return this
-    }
+        return this;
+    };
 
     ////////////////// appendChilds ////////////////////////
 
     /**
      * * Insere um ou mais elementos na lista de nós filhos.
      * * Se o elemento inserido for filho de outro nó, este então é removido de seu nó pai e inserido no elemento alvo, senão é apenas inserido no elemento alvo.
-     * 
+     *
      * ------
      * @param {ElementReference} nodes Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
-     * @param {number} posRef (opcional) Um número que represente a posição (index) em que os elementos filhos serão inseridos. O nó filho que ocupava anteriormente o index especificado é empurrado para frente dando espaço para os novos elementos. Se senhum argumento for passado os elementos serão inseridos ao final da lista de nós filhos.
-     * @param {(tools:ElementTools, done: Function)=>void} handler (opcional) Executa uma função para cada elemento passado antes da operação ser concluída. O elemento atual só será inserido no novo elemento pai ao invocar a função **done( )**. Recebe dois parâmetros: **tools** e **done**.
+     *
+     * @param {{handler: _CallbackFunction, position: number}|_CallbackFunction} options
      */
-    dom.appendChilds = function (nodes, handler = Function, posRef = NUMB) {
-        
-        //Reorganizar argumento pulável - Passar uma função passada em posRef para handler
-        if (__.type(handler) == 'number' && posRef === NUMB) {
-            posRef = handler
-            handler = Function
-        }
 
-        const err = __.err('dom.appendChilds')
-        err.to(nodes, 'HTMLElement, HTMLSelector, elementList')
+    dom.appendChilds = function (nodes, options = {}) {
+        const err = __.err("dom.appendChilds");
+
+        err.to(nodes, "HTMLElement, HTMLSelector, elementList")
             .isVoid(nodes)
-            .to(handler, 'function', false)
-            .to(posRef, 'number, HTMLElement, HTMLSelector', false)
-            .done()
+            .to(options, "function, object", false)
+            .done();
+
+        nodes = __.ex(nodes, err);
+
+        x.pos = options.position !== undefined ? options.position : NUMB
+        x.handler = options.handler || (__.type(options) == 'function'? options : null)
         
-        nodes = __.ex(nodes, err)
+        //Apenas teste
+        x.isDone = false
+        ///Lembrar - Validar erro de valor de propriedade options *******>>
 
         to((parent) => {
-            
             //Buscar por nó de referencia
-            switch (__.type(posRef)) {
-                case 'number':
-                    x.nodeRef = parent.children[posRef]
-                    break
-                case 'string':
-                    x.nodeRef = parent.querySelector(posRef)
-                    break
-                case 'HTMLElement':
-                    x.nodeRef = posRef.parentElement == parent? posRef : null
+            switch (__.type(x.pos)) {
+                case "number":
+                    x.nodeRef = parent.children[x.pos];
+                    break;
+                case "string":
+                    x.nodeRef = parent.querySelector(x.pos);
+                    break;
+                case "HTMLElement":
+                    //Verificar se a referência passada é um elemento filho do nó destino
+                    x.nodeRef = x.pos.parentElement == parent ? x.pos : null;
             }
 
             nodes.forEach((child) => {
-                parent.insertBefore(child, x.nodeRef)
-                
-            })
-        })
+                x.done = () => { x.isDone = true; parent.insertBefore(child, x.nodeRef)}
+                //Executar se uma callback function for passado
+                if (x.handler) {
+                    x.handler({}, x.done)
+                } else {
+                    x.done()
+                }
+            });
 
-        delete x.nodeRef
-        return this
-    }
+            //Teste
+            if (!x.isDone) {
+                console.error('Esperado que a função done() seja invocada ao menos uma vez')
+            }
+        });
 
-    console.log('box-temp dom.js', x)
-    return Object.freeze(dom)
+        delete x.nodeRef;
+        delete x.handler
+        delete x.pos
+        delete x.done
+        return this;
+    };
+
+    /**
+     * * Insere uma string que representa elementos HTML como sendo nós do tipo HTMLElement.
+     * * A string não sobrescreve o contéudo HTML do elemento alvo, mas a converte em um nó do tipo HTMLElement e a insere ao final da lista de elementos filhos (ou em uma posição especificada em `< options.position >`).
+     *
+     * ----
+     * ----
+     * @param {string} HTMLText
+     * * Uma String que representa um ou mais elementos HTML. Representação de comentários também é suportado.
+     * ----
+     * @param {Function|{amount:number, position: (number|string|HTMLElement), handler: (source:ElementTools, done:Function)=>void}} options
+     * * *(`Opcional`)*
+     * * Pode receber uma função callback que é executada antes do elemento gerado ser inserido. Espera a invocação do parâmetro **done( )** para executar a operação.
+     * * Pode receber um Objeto que recebe as seguintes propriedades:
+     *
+     * > * **`handler`** A função callback descrita anteriormente.
+     *
+     * > * **`amount`** - Um número que define a quantidade de elementos que serão gerados a partir da string.
+     *
+     * > * **`position`** - Uma referência que indique a posição em que o elemento gerado será inserido na lista de elementos filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência, indica que o novo elemento será inserido antes dele.
+     */
+    dom.appendHTML = function (HTMLText, options = {}) {
+        //Criar um elemento capsula temporário
+        x.capsule = document.createElement("div");
+        x.capsule.innerHTML = HTMLText;
+        console.log(x.capsule);
+        console.log(x.capsule.childNodes);
+    };
+
+    console.log("box-temp dom.js", x);
+    return Object.freeze(dom);
 }
 
 
