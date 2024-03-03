@@ -36,13 +36,19 @@ export default function dom(elements) {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
 
-    function to(fn) {
-        if (elements.length > 1) {
+    /**
+     * * Percorre os elementos raiz
+     * @param {Function} fn Executar uma função para cada elemento
+     * @param {number} index Especificar índice de qual elemento trabalhar
+     */
+    function to(fn, index) {
+        if (elements.length > 1 && index === undefined) {
             for (let i = 0; i < elements.length; i++) {
                 fn(elements[i], i, elements);
             }
         } else {
-            fn(elements[0], 0, elements);
+            index = index === undefined || (index > elements.length - 1) ? 0 : index
+            fn(elements[index], index, elements);
         }
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
@@ -116,7 +122,7 @@ export default function dom(elements) {
      * ------
      * @param {ElementReference} nodes Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
      *
-     * @param {{handler: _CallbackFunction, position: number}|_CallbackFunction} options
+     * @param {{handler: _CallbackFunction, position: number, root:number}|_CallbackFunction} options
      */
 
     dom.appendChilds = function (nodes, options = {}) {
@@ -128,47 +134,58 @@ export default function dom(elements) {
             .done();
 
         nodes = __.ex(nodes, err);
-
-        x.pos = options.position !== undefined ? options.position : NUMB
-        x.handler = options.handler || (__.type(options) == 'function'? options : null)
         x.isDone = false //Indica se a função done foi executada
+        x.loop = true
+       
+            
+        options = {
+            position: options.position !== undefined ? options.position : null,
+            handler: options.handler || (__.type(options) == 'function' ? options : null),
+            root: options.root !== undefined? options.root : 0
+        }
 
 
         ///Lembrar - Validar erro de valor de propriedade options *******>>
 
         to((parent) => {
-            //Buscar por nó de referencia
-            switch (__.type(x.pos)) {
-                case "number":
-                    x.nodeRef = parent.children[x.pos];
-                    break;
-                case "string":
-                    x.nodeRef = parent.querySelector(x.pos);
-                    break;
-                case "HTMLElement":
-                    //Verificar se a referência passada é um elemento filho do nó destino
-                    x.nodeRef = x.pos.parentElement == parent ? x.pos : null;
-            }
+
+            //Lista de filhos sem atualização dos novos filhos inseridos
+            x.childList = [...parent.children]
 
             nodes.forEach((child) => {
-                x.done = () => { x.isDone = true; parent.insertBefore(child, x.nodeRef)}
+                //Buscar por nó de referencia
+                switch (__.type(options.position)) {
+                    case "number":
+                        x.nodeRef = x.childList[options.position];
+                        break;
+                    case "string":
+                        x.nodeRef = parent.querySelector(options.position);
+                        break;
+                    case "HTMLElement":
+                        //Verificar se a referência passada é um elemento filho do nó destino
+                        x.nodeRef = options.position.parentElement == parent ? options.position : null;
+                }
+
+            
+                x.done = () => { x.isDone = true; parent.insertBefore(child, x.nodeRef) }
+                
                 //Executar se uma callback function for passado
-                if (x.handler) {
-                    x.handler({}, x.done)
+                if (options.handler) {
+                    options.handler({}, x.done)
                 } else {
                     x.done()
                 }
             });
 
-        });
+        }, options.root);
         
         //Lançar erro se done() não for executada
         err.notDone(x.isDone, 2)
 
-        delete x.nodeRef;
-        delete x.handler
+        delete x.childList
+        delete x.nodeRef
+        delete x.loop
         delete x.isDone
-        delete x.pos
         delete x.done
         return this;
     };
@@ -204,6 +221,3 @@ export default function dom(elements) {
     console.log("box-temp dom.js", x);
     return Object.freeze(dom);
 }
-
-
-
