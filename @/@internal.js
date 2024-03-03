@@ -358,6 +358,29 @@ __.err = function (thisName) {
         } catch (err) {
             ERR.launch(err)
         }
+
+        return this
+    }
+
+
+    fn.invalidProp = function (obj, list, param=1) {
+        Object.keys(obj).forEach((prop)=>{
+            try {
+                if (!list.includes(prop)) {
+                    ERR.mount({
+                        errMsg: 'invalidProp',
+                        errArg: arg,
+                        errName: 'Propriedade Inválida',
+                        errTarget: arg.list[param - 1],
+                        errValue: prop
+                    })
+                }
+
+            } catch (err) {
+                ERR.launch(err)
+            }
+        })
+        return this
     }
 
     return fn
@@ -461,7 +484,10 @@ const ERR = {
                     invalidSelector: `Erro de busca no DOM! O seletor "${errValue}" é inválido`,
 
                     //Erro de parametro done() não executado.
-                    notDone: `Esperado que a função done() passada como o segundo parâmetro de uma callback function seja executada ao menos uma vez!`
+                    notDone: `Esperado que a função done() passada como o segundo parâmetro de uma callback function seja executada ao menos uma vez!`,
+
+                    //Erro de propriedade inválida
+                    invalidProp: `"${errValue}" propriedade não esperada!`
                 }[errMsg],
             })
         );

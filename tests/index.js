@@ -15,13 +15,20 @@ const selectors = '.two, .one'
 const childs = [...two.children]
 
 const el = dom(selectors)
-
-function hello() {
-    console.log('Hellooo')
+let prop = {}
+function hello(x = {}) {
+    
+    __.err('hello').to(x, 'object')
+        .invalidProp(x, ['pos', 'foo'])
+        .done()
 }
 
-let tog = true
-el.appendChilds('#tree > div', {position: 0,root: 1,})
+el.appendChilds('#tree > div', { position: 0, root: 1, })
+
+
+prop.teste = 2
+hello(prop)
+
 
 
 
