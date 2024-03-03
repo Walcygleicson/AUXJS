@@ -131,9 +131,9 @@ export default function dom(elements) {
 
         x.pos = options.position !== undefined ? options.position : NUMB
         x.handler = options.handler || (__.type(options) == 'function'? options : null)
-        
-        //Apenas teste
-        x.isDone = false
+        x.isDone = false //Indica se a função done foi executada
+
+
         ///Lembrar - Validar erro de valor de propriedade options *******>>
 
         to((parent) => {
@@ -160,14 +160,14 @@ export default function dom(elements) {
                 }
             });
 
-            //Teste
-            if (!x.isDone) {
-                console.error('Esperado que a função done() seja invocada ao menos uma vez')
-            }
         });
+        
+        //Lançar erro se done() não for executada
+        err.notDone(x.isDone, 2)
 
         delete x.nodeRef;
         delete x.handler
+        delete x.isDone
         delete x.pos
         delete x.done
         return this;

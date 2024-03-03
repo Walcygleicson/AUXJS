@@ -14,9 +14,19 @@ const selectors = '.two, .one'
 
 const el = dom(selectors)
 var cont = 0
-el.appendChilds('#tree > div', (e, done) => {
-    done
-}) 
+el.appendChilds('#tree > div', {
+    position: true,
+    handler(e, done) {
+        cont++
+        if (cont == 1) {
+            done()
+        }
+
+        if (cont == 2) {
+            done()
+            
+        } else if(cont == 3){done()}
+}}) 
 
 
 

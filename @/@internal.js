@@ -339,8 +339,27 @@ __.err = function (thisName) {
         return this
     }
 
+
+
+    fn.notDone = function (done = false, param = 1) {
+        try {
+            if (!done) {
+                ERR.mount({
+                    errMsg: 'notDone',
+                    errArg: arg,
+                    errName: 'Operação Perdida',
+                    errTarget: arg.list[param - 1]
+                })
+            }
+        } catch (err) {
+            ERR.launch(err)
+        }
+    }
+
     return fn
 }
+
+
 
 //-----> Auxilar de __.err <----------
 const ERR = {
@@ -393,7 +412,10 @@ const ERR = {
                     notFound: `Nenhum elemento encontrado com o seletor "${errValue}"! Verifique se o seletor está correto ou se o elemento existe no DOM`,
 
                     //Erro de seletor inválido
-                    invalidSelector: `Erro de busca no DOM! O seletor "${errValue}" é inválido`
+                    invalidSelector: `Erro de busca no DOM! O seletor "${errValue}" é inválido`,
+
+                    //Erro de parametro done() não executado.
+                    notDone: `Esperado que a função done() passada como o segundo parâmetro de uma callback function seja executada ao menos uma vez!`
                 }[errMsg],
             })
         );
