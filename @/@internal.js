@@ -404,16 +404,11 @@ __.indexRef = function (ref, list, root = null, getIndex = false) {
             break;
         case "string":
             root = root == null? document : root
-            //Busca feita em document
-            if (root == document) {
-                //Obter apenas o primeiro elemento que estiver presente em list
-                x.nodeRef = [...root.querySelectorAll(ref)].filter((e) => {
-                    return list.includes(e)? e : null
-                })[0] || null
-
-            } else {
-                x.nodeRef = root.querySelector(ref);
-            }
+            
+            //Verificar se algum elemento da lista é selecionável com o seletor passado
+            x.nodeRef = list.filter((e) => {
+                return e.matches(ref)? e : null
+            })[0] || null
 
             break;
         case "HTMLElement":

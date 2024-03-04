@@ -27,9 +27,7 @@ el.appendChilds('#tree > div', { position: 0, root: 1, })
 
 
 prop.teste = 2
-hello(prop)
-
-
+//hello(prop)
 
 
 
