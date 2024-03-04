@@ -351,7 +351,7 @@ __.err = function (thisName) {
                 ERR.mount({
                     errMsg: 'notDone',
                     errArg: arg,
-                    errName: 'Operação Perdida',
+                    errName: 'Operação Esperada',
                     errTarget: arg.list[param - 1]
                 })
             }
@@ -363,23 +363,59 @@ __.err = function (thisName) {
     }
 
 
-    fn.invalidProp = function (obj, list, param=1) {
-        Object.keys(obj).forEach((prop)=>{
+    /**
+     * * Verifica se o objecto passado condiz com o objeto esperado como suas propriedades e tipos de valores. Lança um erro se o objeto houver uma propriedade não esperada ou tipo de valor não esperado
+     * 
+     * @param {object} expect Um objeto com as propriedades e tipos de valores que o objeto principal deve possuir
+     * @param {object} obj O objeto principal
+     * @param {number} param 
+     * @returns 
+     */
+    fn.expectObj = function (obj, expect, param = 1) {
+        x.hasErr = false //Indica se o erro deve ser lançado
+        Object.keys(obj).forEach((prop) => {
+            //Verificar se propriedade passada é esperada
+            if (Object.hasOwn(expect, prop)) {
+                x.typeList = expect[prop].split(/\s*,\s*/g)
+                //Verificar se tipo de valor é esperado
+                if (!x.typeList.includes(__.type(obj[prop])) && !x.typeList.includes('any')) {
+                    x.hasErr = true
+                    x.errName = 'Tipo Inválido' 
+                }
+
+            } else {
+                x.typeList = null
+                x.hasErr = true
+                x.errName = 'Propriedade Inesperada'
+                x.propList = Object.keys(expect).map((k) => {
+                    return '\t' + k + ': [' + expect[k].split(',').join(' | ') + ']'
+                }).join(',\n')
+                
+            }
+
+            //Testar erro
             try {
-                if (!list.includes(prop)) {
+
+                if (x.hasErr) {
+                    
                     ERR.mount({
-                        errMsg: 'invalidProp',
+                        errMsg: "expectObj",
+                        errName: x.errName,
                         errArg: arg,
-                        errName: 'Propriedade Inválida',
                         errTarget: arg.list[param - 1],
-                        errValue: prop
-                    })
+                        errValue: prop,
+                        other: x.typeList || x.propList
+                    });
                 }
 
             } catch (err) {
                 ERR.launch(err)
             }
+        
+
         })
+
+
         return this
     }
 
@@ -393,17 +429,15 @@ __.err = function (thisName) {
  * 
  * @param {number|string|HTMLElement} ref Uma referencia do elemento na lista. Pode ser sua posição (index), seletor ou o elemento 
  * @param {Array<HTMLElement>} list A lista de elementos para a busca
- * @param {HTMLElement|document} root Um elemento no qual inidicar a busca por seletor
  * @param {boolean} getIndex Se true o retorno é o índice do elemento na lista
  */
-__.indexRef = function (ref, list, root = null, getIndex = false) {
-    
+__.indexRef = function (ref, list, getIndex = false) {
+    delete x.nodeRef
     switch (__.type(ref)) {
         case "number":
             x.nodeRef = list[ref] || null;
             break;
         case "string":
-            root = root == null? document : root
             
             //Verificar se algum elemento da lista é selecionável com o seletor passado
             x.nodeRef = list.filter((e) => {
@@ -435,6 +469,7 @@ const ERR = {
      * @param {string} param0.errName O nome do erro
      * @param {string} param0.errMsg O nome da mensagem
      * @param {Object} param0.errTarget Objecto de informações do argumento atual "arg.list.{}"
+     * @param {*} errValue
      * @param {*} other Outros valores
      * @param {object} param0.errArg O objeto que armazena a quantidade de paraemtro e quantidade obrigatória de parametros
      */
@@ -481,8 +516,16 @@ const ERR = {
                     //Erro de parametro done() não executado.
                     notDone: `Esperado que a função done() passada como o segundo parâmetro de uma callback function seja executada ao menos uma vez!`,
 
-                    //Erro de propriedade inválida
-                    invalidProp: `"${errValue}" propriedade não esperada!`
+                    //Erro de propriedade não esperada ou tipo de valor não esperado
+                    expectObj: (function () {
+                        if (errName == 'Tipo Inválido') {
+                            other = __.type(other) == 'array'? other.join(' | ') : null
+                            return `A propriedade "${errValue}" espera receber os seguintes tipos de valores: [${other}]`
+                        } else {
+                            return `"${errValue}" propriedade não esperada! O objeto destino espera receber apenas as seguintes opções de propriedades:\n\n{\n${other}\n}`
+                        }
+                    })(),
+
                 }[errMsg],
             })
         );

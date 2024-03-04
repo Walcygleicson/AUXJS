@@ -4,6 +4,14 @@ import("../@/@docs.js")
 
 const NUMB = 999999999
 
+/**Armazena tipos personalisados */
+const t = {
+    /**"number, string, HTMLElement, null" */
+    IDXREF: 'number, string, HTMLElement, null',
+
+    ELREF: 'HTMLElement, HTMLSelector, elementList'
+}
+
 
 /**
  * **AUX.JS**
@@ -28,10 +36,7 @@ const NUMB = 999999999
 export default function dom(elements) {
     //Tratar erros de argumento
     const error = __.err("dom");
-    error
-        .to(elements, "HTMLElement, HTMLSelector, elementList")
-        .isVoid(elements, 1)
-        .done();
+    error.to(elements, t.ELREF).isVoid(elements, 1).done();
     elements = __.ex(elements, error);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/
@@ -47,7 +52,8 @@ export default function dom(elements) {
                 fn(elements[i], i, elements);
             }
         } else {
-            index = index === undefined || (index > elements.length - 1) ? 0 : index
+            index =
+                index === undefined || index > elements.length - 1 ? 0 : index;
             fn(elements[index], index, elements);
         }
     }
@@ -113,59 +119,99 @@ export default function dom(elements) {
         return this;
     };
 
-    ////////////////// appendChilds ////////////////////////
+    ////////////////// appendChilds //////////////////////// - Finalizado
 
     /**
      * * Insere um ou mais elementos na lista de nós filhos.
      * * Se o elemento inserido for filho de outro nó, este então é removido de seu nó pai e inserido no elemento alvo, senão é apenas inserido no elemento alvo.
      *
      * ------
-     * @param {ElementReference} nodes Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
+     * ------
+     * @param {ElementReference} nodes
+     * * Deve receber os elementos que serão inseridos. Um elemento ou Array|Object de elementos. Um seletor ou Array|Object de seletores. Um NodeList ou HTMLCollection.
+     *-------
+    * @param {{handler: _CallbackFunction, position: PositionReference, root:PositionReference}|_CallbackFunction} options
      *
-     * @param {{handler: _CallbackFunction, position: number, root:number}|_CallbackFunction} options
+     * *`(opcional)`*
+     * * Pode receber uma função callback que é executada antes do elemento obtido ser inserido no novo pai. Espera a invocação do parâmetro **done( )** para executar a operação.
+     * * Pode receber um Objeto que recebe as seguintes propriedades opcionais:
+     *
+     * > * **`handler`** A função callback descrita anteriormente.
+     *
+     * > * **`root`** - Uma referência que indique em qual elemento pai (se houver mais de um elemento na lista de manipulação) inserir os elementos filhos obtidos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento da lista ou o próprio elemento como referência.
+     *
+     * > * **`position`** - Uma referência que indique a posição em que o elemento gerado será inserido na lista de elementos filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência, indica que o novo elemento será inserido antes dele.
+     *------
+     * @example 
+     * 
+     * .appendChilds(".foo")
+     * 
+     * //ou
+     * .appendChilds(".foo", {root: "#div-3", position: 2})
+     * 
+     * //ou
+     * .appendChilds(".foo", function({get, def}, done){
+     *      //Se código aqui
+     *      this.position = 2 //É possível acessar as propriedades opcionais desta forma também.
+     *      done()
+     * })
+     * 
+     * //ou
+     * .appendChilds(".foo", {
+     *      root: "#div-3",
+     *      position: 2,
+     *      handler({get, def}, done){
+     *          //Seu código aqui
+     *          done()
+     *      }
+     * })
      */
 
     dom.appendChilds = function (nodes, options = {}) {
         let err = __.err("dom.appendChilds");
+        x.expect = {position: t.IDXREF,root: t.IDXREF,handler: "function, null",};
 
-        err.to(nodes, "HTMLElement, HTMLSelector, elementList")
+        err.to(nodes, t.ELREF)
             .isVoid(nodes)
             .to(options, "function, object", false)
+            .expectObj(options, x.expect, 2)
             .done();
 
         nodes = __.ex(nodes, err);
-        x.isDone = false //Indica se a função done foi executada
-       
-            
+        x.isDone = false; //Indica se a função done foi executada
+
+        //Armazena o valor de option.root
+        x.rootState = __.indexRef(options.root, elements) || elements[0];
+        x.childList = [...x.rootState.children];
+
         options = {
             position: options.position !== undefined ? options.position : null,
-            handler: options.handler || (__.type(options) == 'function' ? options : null),
-            root: options.root !== undefined? options.root : 0
-        }
-
-
-        ///Lembrar - Validar erro de valor de propriedade options *******>>
-
+            handler:
+                options.handler ||
+                (__.type(options) == "function" ? options : null),
+            get root() {
+                return x.rootState;
+            },
+            set root(val) {
+                val = __.indexRef(val, elements) || x.rootState;
+                if (val !== x.rootState) {
+                    x.rootState = val;
+                    x.childList = [...x.rootState.children];
+                }
+            },
+        };
 
         nodes.forEach((child) => {
-
-            //Verificar se o root foi alterado pelo usuário
-            //Se sim, atualizar pai e lista de filhos 
-            if (elements[options.root] != x.parent) {
-                x.parent = elements[options.root];
-                x.childList = [...x.parent.children]; 
-            }
-
-            //Obter o elemento filho referência para o insertBefore
-            x.nodeRef = __.indexRef(options.position, x.childList, x.parent);
-
             //Função done()
             x.done = () => {
-                x.isDone = true;
-                x.parent.insertBefore(child, x.nodeRef);
+                err.expectObj(options, x.expect, 2);
+                //Obter o elemento filho referência para o insertBefore
+                x.nodeRef = __.indexRef(options.position, x.childList);
+                x.isDone = true; //Avisar que esta função foi executada
+                options.root.insertBefore(child, x.nodeRef);
             };
 
-            //Executar se uma callback function for passado
+            //Callback function
             if (options.handler) {
                 options.handler(2, x.done);
             } else {
@@ -174,14 +220,15 @@ export default function dom(elements) {
         });
 
         //Lançar erro se done() não for executada
-        err.notDone(x.isDone, 2)
+        err.notDone(x.isDone, 2);
 
-        delete x.childList
-        delete x.nodeRef
-        delete x.isDone
-        delete x.done
-        delete x.parent
-        err = null
+        delete x.childList;
+        delete x.rootState;
+        delete x.nodeRef;
+        delete x.isDone;
+        delete x.expect;
+        delete x.done;
+        err = null;
         return this;
     };
 

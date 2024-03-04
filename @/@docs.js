@@ -7,6 +7,10 @@
  * @typedef {string} Selector Uma *String* que representa um seletor *CSS* válido que aponte para um ou mais elementos existentes no *DOM*.
  */
 
+/**
+ * @typedef {number|string|HTMLElement|null} PositionReference Uma referência de posição de um elemento HTML dentro de uma lista de elementos
+ */
+
 
 /**
  * @typedef {Array<Selector|HTMLElement>|NodeList|HTMLCollection} ElementList Uma lista de elementos HTML e/ou Seletores válidos. Pode ser um Array, um Object, um NodeList ou um HTMLCollection.
