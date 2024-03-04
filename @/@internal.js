@@ -458,6 +458,18 @@ __.indexRef = function (ref, list, getIndex = false) {
 }
 
 
+__.strHTML = function (str) {
+    x.capsule = document.createElement('div')
+    x.capsule.innerHTML = str
+    str = document.createDocumentFragment()
+    str.append(...x.capsule.childNodes)
+    x.capsule.innerHTML = ''
+    
+    delete x.capsule
+    return str
+}
+
+
 
 //-----> Auxilar de __.err <----------
 const ERR = {

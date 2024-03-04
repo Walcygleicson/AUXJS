@@ -38,3 +38,14 @@ body {
     padding: 1em;
     background: rgb(194, 244, 220);
 }
+
+p {
+    background: red;
+    border-radius:50%;
+    height: 30px;
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}

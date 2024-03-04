@@ -253,11 +253,68 @@ export default function dom(elements) {
      * > * **`position`** - Uma referência que indique a posição em que o elemento gerado será inserido na lista de elementos filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência, indica que o novo elemento será inserido antes dele.
      */
     dom.appendHTML = function (HTMLText, options = {}) {
-        //Criar um elemento capsula temporário
-        x.capsule = document.createElement("div");
-        x.capsule.innerHTML = HTMLText;
-        console.log(x.capsule);
-        console.log(x.capsule.childNodes);
+        let err = __.err("dom.appendHTML");
+        err.to(HTMLText, "string")
+            .to(options, "function, object", false)
+            .expectObj(options, {
+                amount: "number",
+                position: t.IDXREF,
+                handler: "function, null",
+                root: t.IDXREF
+            })
+            .done();
+
+        
+        //Armazena o valor de option.root
+        x.rootState = __.indexRef(options.root, elements) || elements[0];
+        x.childList = [...x.rootState.children];
+        x.isDone = false
+
+        options = {
+            handler: options.handler || options,
+            amount: options.amount || 1,
+            position: options.position ?? null,
+            get root() {
+                return x.rootState;
+            },
+            set root(val) {
+                val = __.indexRef(val, elements) || x.rootState;
+                if (val !== x.rootState) {
+                    x.rootState = val;
+                    x.childList = [...x.rootState.children];
+                }
+            },
+        };
+
+        //Para cada elemento da string gerado...
+        for (let i = 0; i < options.amount; i++){
+            
+            
+            //Função done()
+            x.done = () => {
+                //Obter o elemento filho referência para o insertBefore
+                x.nodeRef = __.indexRef(options.position, x.childList);
+                x.isDone = true; //Avisar que esta função foi executada
+                options.root.insertBefore(__.strHTML(HTMLText), x.nodeRef);
+            };
+
+            if (__.type(options.handler) == 'function') {
+                options.handler(i, x.done)
+
+            } else {x.done()}
+
+            
+        }
+
+
+
+        delete x.rootState
+        delete x.childList
+        delete x.nodeRef
+        delete x.isDone
+        delete x.done
+        err = null;
+        return this;
     };
 
     console.log("box-temp dom.js", x);
