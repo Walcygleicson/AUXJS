@@ -1370,7 +1370,7 @@ var AUX = (function () {
      * @param {_CallbackFunction} handler
      * * Uma função que é executada quando o evento for disparado.
      * ----
-     * @param {boolean | EventOptions | {times: number}} options
+     * @param {boolean | EventOptions | {times: number, removeStack: boolean | string}} options
      * *`(opcional)`*
      * * Um objeto que especifica características sobre os ouvintes de eventos. Se passado, todos os ouvintes declarados receberão esta mesma configuração. Deve receber as seguintes propriedades opcionais:
      *
@@ -1395,40 +1395,64 @@ var AUX = (function () {
             .to(options, "boolean, object", false)
             .done();
 
-        var fn;
-        if (options.times) {
-            fn = function (evt) {
-                options.times--;
-                handler(options.evtTarget, evt);
+        var fn = function (evt) {
+            options.times !== undefined? options.times-- : null
+            handler(options.evtTarget, evt);
                 if (options.times === 0) {
                     options.evtTarget.removeEventListener(type, fn);
                 }
             };
-        }
 
-        if (options.removeStack) {
             
-            //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
-            if (!eventRemoveStack[type]) {eventRemoveStack[type] = []}
-
-            ///
             
-        }
+            
+            to((root) => {
+                // Pilha de remoção de eventos
+                if (options.removeStack) {
+                    
+                    //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
+                    if (!eventRemoveStack[type]) {
+                        eventRemoveStack[type] = []
+                    }
+        
+                    // Adicionar referencia ao elemento // Verificar se elemento já não está na lista
+                    options.isOnStack = (function () {
+                        for (let i = 0; i < eventRemoveStack[type].length; i++){
+                            if (eventRemoveStack[type][i].target === root) {
+                                options.targetId = i // Informar onde a referencia do elemento está
+                                return true
+                            }
+                        }
 
-        console.log(eventRemoveStack)
+                        return false
+                    })()
 
-        to((root) => {
-            if (options.times) {
-                root.addEventListener(type, fn, options);
+                    // Se referencia ao elemento já estiver guardado apenas adicionar as referncias aos ouvintes
+                    if (options.isOnStack) {
+                        eventRemoveStack[type][options.targetId].list.push({
+                            fn: fn,
+                            handler: handler
+                        })
+                    } else { // Se não criar referencia nova
+                        eventRemoveStack[type].push({
+                            target: root,
+                            list: [{
+                                fn: fn,
+                                handler:handler
+                            }]
+                        })
+                        
+                    }
+
+                    console.log(options.isOnStack)
+    
+                }
+
                 options.evtTarget = root;
-            } else {
-                root.addEventListener(
-                    type,
-                    handler.bind(handler, root),
-                    options
-                );
-            }
-        }, this.elements);
+                root.addEventListener(type, fn, options);
+        
+            }, this.elements);
+        console.log(eventRemoveStack)
 
         return this;
     };

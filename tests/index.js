@@ -20,18 +20,27 @@ const selectors = '.two, .one'
 const childs = [...two.children]
 
 const my = AUX(".box")
-const btn =  AUX('#btn')
+const btn =  AUX('#btn, #ch-0')
+
+btn.on(
+    "click",
+    (e, i, o) => {
+        console.log('ev1')
+    },
+    { removeStack: true }
+);
 
 
+btn.on('click', (e, i, o) => {
+    console.log(e, i)
+   
+}, { removeStack: true, times: 2 })
 
+function mouseEnter() {
+  console.log('mouse enter')
+}
 
-// btn.on('click', (e, i, o) => {
-//     console.log(e, i)
-//     my.forms((e) => {
-//         //console.log(e);
-//     })
-// })
-
+AUX("#btn").on("mouseenter", mouseEnter, {removeStack: true})
 
 
 
