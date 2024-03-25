@@ -10,40 +10,77 @@
     <title>AUXJS TESTS</title>
     <link rel="stylesheet" href="style.css">
     
+    
 </head>
     
 <body>
+    <div id="super-parent">
 
-    <div id="one" class="one box">
-        <div id="ch-0" class="one-child">0</div>
-        <div class="one-child">1</div>
-        <div class="one-child">2</div>
-    </div>
+        <button id="btn">Click</button>
+        <div id="one" class="one box" disabled>
+            <div id="ch-0" class="one-child">0</div>
+            <div class="one-child">1</div>
+            <div class="one-child">2</div>
+        </div>
+    
+        <div id="two" class="two box" buffered>
+            <div id="ch-a" class="two-child">
+                <div>A</div>
+            </div>
+            <div id="ch-b"  class="two-child">
+                <div>B</div>
+            </div>
+            <div id="ch-c" class="two-child">
+                <div>C</div>
+            </div>
+        </div>
+    
+        <div id="tree" class="box">
+            <div id="x-0">x0</div>
+            <div id="x-1">x1</div>
+            <div id="x-2">x2</div>
+            <div id="x-3">x3</div>
+            <div id="x-4">x4</div>
+            <input type="text">
+            <input type="checkbox" name="olee" id="">
+            
+        </div>
 
-    <div id="two" class="two box">
-        <div id="ch-a" class="two-child">
-            <div>A</div>
+        <div class="ramo">
+            <div class="principal">
+                <div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                    <div>
+                        <input type="checkbox" class="check">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="ch-b"  class="two-child">
-            <div>B</div>
-        </div>
-        <div id="ch-c" class="two-child">
-            <div>C</div>
-        </div>
-    </div>
-
-    <div id="tree" class="box">
-        <div id="x-0">x0</div>
-        <div id="x-1">x1</div>
-        <div id="x-2">x2</div>
-        <div id="x-3">x3</div>
-        <div id="x-4">x4</div>
     </div>
 
 
     
     
     <script type="module" src="index.js"></script>
+    <!-- <script src="test.js"></script> -->
 </body>
     
 </html>

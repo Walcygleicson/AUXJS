@@ -50,6 +50,7 @@ class GetterProperties {
         this.next = null
         this.prev = null
         this.childLength = null
+        this.empty = null
         this.childList = null
         this.text = null
         this.event = null
@@ -62,9 +63,25 @@ class GetterProperties {
 class DefinerMethods {
     constructor(target, type) {
         this.attrs = function(attrs){console.log(target)}
-        this.done = function done() {
-            console.log("DONE()");
-        };
+    }
+}
+
+
+class IsMethods {
+    constructor(target, type) {
+        this.selector = function (selector) { }
+        this.childOf = function (selector) { }
+        this.parentOf = function (selector) { }
+        this.adjacentTo = function (selector) { }
+        this.attrs = function (attributes, mode) { }
+        this.rightOf = function (selector) { }
+        this.leftOf = function (selector) { }
+        this.class = function (classNames, mode) { }
+        this.style = function (props, mode) { }
+        this.tag = function (tagNames, mode) { }
+        this.minChilds = function (num) { }
+        this.maxChilds = function (num) { }
+        this.empty = function(selector, mode){} // Verifica se algum filho está vazio
     }
 }
 

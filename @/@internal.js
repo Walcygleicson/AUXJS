@@ -181,7 +181,7 @@ __.err = function (thisName) {
      * * Obtém informações do parâmetro para tratamento dos erros.
      * 
      * @param {argument} argValue O valor passado como argumento do parametro
-     * @param {string} types Uma strig que representa um tipo de valor que o parametro deve receber, múltiplos tipos devem ser separados por vírgula
+     * @param {"string" | "function" | "array" | "number" | "object" | "HTMLElement" | "HTMLCollection" | "comment" | "text" | "nodeList" | "document" | "null" | "undefined" | "elementList" | "HTMLSelector" | "bigInt" | "symbol" | "number, string" | "function, null" | "number, string, array" | "array, object"} types Uma strig que representa um tipo de valor que o parametro deve receber, múltiplos tipos devem ser separados por vírgula
      * @param {boolean} required Define se o parametro é obrigatório. O padrão é **true**.
      */
     fn.to = function (argValue, types, required = true) {
@@ -457,6 +457,41 @@ __.indexRef = function (ref, list, getIndex = false) {
     return x.nodeRef
 }
 
+/**
+ * Executa uma função para cada elemento obtido de uma lista de elementos através de uma referencia de posição ou seletor
+ * @param {*} refs 
+ * @param {Array<HTMLElement>} list 
+ */
+__.getElementsOfList = function (refs, list) {
+    refs = this.arr(refs)
+    x.elements = []
+    for (let i = 0; i < refs.length; i++){
+        x.ref = refs[i]
+        switch (__.type(x.ref)) {
+            case "number":
+                x.elements.push(list[x.ref])
+                break;
+            case "string":
+                //Verificar se algum elemento da lista é selecionável com o seletor passado
+                x.elements.push(...list.filter((e) => {
+                    if (e.matches(x.ref)) {return e}
+                    }))
+                    
+                break;
+            case "HTMLElement":
+                //Verificar se a referência passada existe na lista
+                if (list.includes(x.ref)) {
+                    x.elements.push(x.ref) 
+                }
+        }
+            
+    }
+    x.elements = [...new Set(x.elements)]
+
+    delete x.ref
+    return x.elements
+}
+
 
 __.strHTML = function (str) {
     x.capsule = document.createElement('div')
@@ -467,6 +502,20 @@ __.strHTML = function (str) {
     
     delete x.capsule
     return str
+}
+
+/**Cria um novo array com os resultados do retorno de um loop */
+__.mapLoop = function (amount, handler) {
+    var arr = []
+    for(let i = 0; i < amount; i++){
+        arr.push(handler(i, amount))
+    }
+    return arr
+}
+
+//Função que captaliza uma string
+__.capitalize = function (string) {
+    return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
 
