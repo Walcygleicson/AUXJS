@@ -20,27 +20,32 @@ const selectors = '.two, .one'
 const childs = [...two.children]
 
 const my = AUX(".box")
-const btn =  AUX('#btn, #ch-0')
+const btn = AUX('#btn')
+const but = AUX("#btn")
 
-btn.on(
-    "click",
-    (e, i, o) => {
-        console.log('ev1')
-    },
-    { removeStack: true }
-);
+btn.on("click", function myEv() {
+    console.log('-----\nclick2')
+},{ removeStack: true, times: 3 });
 
-
-btn.on('click', (e, i, o) => {
-    console.log(e, i)
-   
-}, { removeStack: true, times: 2 })
-
-function mouseEnter() {
-  console.log('mouse enter')
+function clickEvt(e,i) {
+    console.log('click')
 }
 
-AUX("#btn").on("mouseenter", mouseEnter, {removeStack: true})
+btn.on('click', clickEvt, { removeStack: true })
+
+var cont = 0
+function mouseEnter() {
+    console.log('mouse enter')
+    cont++
+    console.log(cont)
+    if (cont >= 3) {
+        btn.removeEvent("mouseenter", mouseEnter)
+        but.removeEvent('click', 'myEv')
+    }
+}
+btn.removeEvent("click", clickEvt)
+
+but.on("mouseenter", mouseEnter, {removeStack: true})
 
 
 

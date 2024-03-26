@@ -81,6 +81,50 @@ var AUX = (function () {
 
     /**Armazena os ouvintes de eventos que foram marcados para serem removidos posteriormente */
     var eventRemoveStack = {};
+    /** Responsável por adicionar referências de ouvintes à pilha de remoção de eventos */
+    const addToRemoveStack = function ({ root, type, handler, fn, options = {} }) {
+        // Pilha de remoção de eventos // Adicionar somente se a função possuir nome ou se options.times não for definida.
+            if (options.removeStack && handler.name && options.times === undefined) {
+                console.log(handler.name);
+                //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
+                if (!eventRemoveStack[type]) {
+                    eventRemoveStack[type] = [];
+                }
+
+                // Adicionar referencia ao elemento // Verificar se elemento já não está na lista
+                options.isOnStack = (function () {
+                    for (let i = 0; i < eventRemoveStack[type].length; i++) {
+                        if (eventRemoveStack[type][i].target === root) {
+                            options.targetId = i; // Informar onde a referencia do elemento está
+                            return true;
+                        }
+                    }
+
+                    return false;
+                })();
+
+                // Se referencia ao elemento já estiver guardado apenas adicionar as referncias aos ouvintes
+                if (options.isOnStack) {
+                    eventRemoveStack[type][options.targetId].list.push({
+                        fn: fn,
+                        handler: handler,
+                    });
+                } else {
+                    // Se não criar referencia nova
+                    eventRemoveStack[type].push({
+                        target: root,
+                        list: [
+                            {
+                                fn: fn,
+                                handler: handler,
+                            },
+                        ],
+                    });
+                }
+            }
+    }
+
+    //========================================MÉTODOS PRINCIPAIS==================================================//
 
     ////// AUX Constructor Lib ////////////////
     /**
@@ -1361,8 +1405,7 @@ var AUX = (function () {
     //////////////// .on ////////////////////
     /**
      * * Adiciona um ouvinte de evento ao elemento especificando seu tipo em *`type`* e executa uma função *`callback`* quando o evento for disparado.
-     * > * **Nota:** Ouvintes de eventos adicionados através deste método precisam ser adicionados em uma pilha de espera de remoção para poderem ser removidos posteriormente por *`AUX.removeEvents()`* caso contrário o ouvinte não poderá ser removido. Para isso defina *`true`* em *`options.removeStack`* para adicioná-los à pilha de espera.
-     * > * É possível remover ouvintes que foram declarados com funçao anônima ou *`arrow functions`* definindo um nome único em *`options.removeStack`*, este nome será usado em *`AUX.removeEvents()`* como referência para a remoção.
+     * > * **Nota:** Ouvintes de eventos adicionados através deste método precisam ser adicionados em uma *`pilha de espera de remoção`* para que sejam removidos posteriormente por *`AUX.removeEvent()`* caso contrário o ouvinte não poderá ser removido. Para isso defina *`true`* em *`options.removeStack`* para adicioná-los à pilha de espera. Ouvintes que foram declarados com *`options.times`* também não são adicionados à pilha pois sua remoção já está automaticamente programada.
      * -----
      * @param {EventType} type
      * * Uma string que representa o tipo do evento esperado.
@@ -1370,13 +1413,13 @@ var AUX = (function () {
      * @param {_CallbackFunction} handler
      * * Uma função que é executada quando o evento for disparado.
      * ----
-     * @param {boolean | EventOptions | {times: number, removeStack: boolean | string}} options
+     * @param {boolean | EventOptions | {times: number, removeStack: boolean}} options
      * *`(opcional)`*
      * * Um objeto que especifica características sobre os ouvintes de eventos. Se passado, todos os ouvintes declarados receberão esta mesma configuração. Deve receber as seguintes propriedades opcionais:
      *
-     * > * **`removeStack:`** (propriedade única da biblioteca) .
+     * > * **`removeStack:`** (propriedade única da biblioteca) Um boolean que indica se este ouvinte será removido futuramente. Se sim, o ouvinte é adicionado em uma *`pilha de espera de remoção`* e pode ser removido com o método *`AUX.removeEvent()`*. Se a função *`callback`* passada for anônima, mesmo com *`options.removeStack: true`* o ouvinte não poderá ser adicionado à pilha pois precisa possuir uma referência ou no mínimo um nome para a remoção posterior.
      *
-     * > * **`times:`** (propriedade única da biblioteca) Um número que indica quantas vezes os ouvintes devem ser invocados após serem adicionados. Após a quantidade máxima de invocação determinada for atingida os ouvintes serão automaticamente removidos. Nota: Estes ouvintes não poderão ser removidos com *`.removeEvents()`*.
+     * > * **`times:`** (propriedade única da biblioteca) Um número que indica quantas vezes os ouvintes devem ser invocados após serem adicionados. Após a quantidade máxima de invocação determinada for atingida os ouvintes serão automaticamente removidos. Nota: Estes ouvintes não poderão ser adicionados à *`pilha de espera de remoção`* mesmo com *`options.removeStack`* definido.
      *
      * > * **`capture:`** Um valor booleano que indica que eventos deste tipo serão despachados para o registrado listener antes de serem despachados para qualquer um *`EventTarget`* abaixo dele na árvore DOM. Se não for especificado, o padrão é false.
      *
@@ -1387,6 +1430,13 @@ var AUX = (function () {
      * > * **`signal:`** Um *`AbortSignal`*. O souvintes serão removidos quando o método *`AbortSignal`* do objeto fornecido *`abort()`* for chamado. Se não for especificado, *`AbortSignal`* será associado ao ouvinte.
      * ------
      * * Nota: Consultar documentação de *`.addEventListener`* parâmetro *`options`* para entender melhor o uso.
+     * ---
+     * @example
+     * .on("click", function ({get, def}, evt){...})
+     * .on("click", function ({get, def}, evt){...}, {times: 3}) // Dispara o evento somente 3 vezes.
+     * 
+     * const myHandler = function({get, def}, evt){...}
+     * .on("click", myHanlder, {removeStack: true}) // Adiciona o ouvinta em uma pilha de espera de remoção.
      */
     AUX.prototype.on = function (type, handler, options = {}) {
         __.err(".on")
@@ -1394,65 +1444,31 @@ var AUX = (function () {
             .to(handler, "function")
             .to(options, "boolean, object", false)
             .done();
-
+        
+        // Função ouvinte real
         var fn = function (evt) {
-            options.times !== undefined? options.times-- : null
+            options.times !== undefined ? options.times-- : null;
             handler(options.evtTarget, evt);
-                if (options.times === 0) {
-                    options.evtTarget.removeEventListener(type, fn);
-                }
-            };
+            if (options.times === 0) {
+                options.evtTarget.removeEventListener(type, fn);
+            }
+        };
 
-            
-            
-            
-            to((root) => {
-                // Pilha de remoção de eventos
-                if (options.removeStack) {
-                    
-                    //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
-                    if (!eventRemoveStack[type]) {
-                        eventRemoveStack[type] = []
-                    }
-        
-                    // Adicionar referencia ao elemento // Verificar se elemento já não está na lista
-                    options.isOnStack = (function () {
-                        for (let i = 0; i < eventRemoveStack[type].length; i++){
-                            if (eventRemoveStack[type][i].target === root) {
-                                options.targetId = i // Informar onde a referencia do elemento está
-                                return true
-                            }
-                        }
+        to((root) => {
 
-                        return false
-                    })()
+            // Adicionar à pilha de remoção.
+            addToRemoveStack({
+                fn: fn,
+                type: type,
+                root: root,
+                handler: handler,
+                options: options
+            })
 
-                    // Se referencia ao elemento já estiver guardado apenas adicionar as referncias aos ouvintes
-                    if (options.isOnStack) {
-                        eventRemoveStack[type][options.targetId].list.push({
-                            fn: fn,
-                            handler: handler
-                        })
-                    } else { // Se não criar referencia nova
-                        eventRemoveStack[type].push({
-                            target: root,
-                            list: [{
-                                fn: fn,
-                                handler:handler
-                            }]
-                        })
-                        
-                    }
+            options.evtTarget = root;
+            root.addEventListener(type, fn, options);
 
-                    console.log(options.isOnStack)
-    
-                }
-
-                options.evtTarget = root;
-                root.addEventListener(type, fn, options);
-        
-            }, this.elements);
-        console.log(eventRemoveStack)
+        }, this.elements);
 
         return this;
     };
@@ -1513,6 +1529,58 @@ var AUX = (function () {
         return this;
     };
 
+    //////////// .removeEvent /////////////
+    AUX.prototype.removeEvent = function (type, handler, options = {}) {
+        type = type.toLowerCase();
+        var evt;
+        to((root) => {
+            evt = eventRemoveStack[type];
+            // Obter referência do tipo do evento e elemento na pilha de remoção de eventos
+            if (evt) {
+                // Buscar referencia ao elemento root
+                for (let ref of evt) {
+                    if (ref.target === root) {
+                        // Buscar lista de ouvintes
+                        for (let list of ref.list) {
+                            if (
+                                list.handler === handler ||
+                                handler === list.handler.name
+                            ) {
+                                // Remoção do ouvinte
+                                root.removeEventListener(
+                                    type,
+                                    list.fn,
+                                    options
+                                );
+
+                                // //Remover referencia da função do ouvinte
+                                ref.list.splice(ref.list.indexOf(list), 1);
+
+                                // Se a lista de referência estiver vazia, deletar referência do elemento.
+                                if (ref.list.length <= 0) {
+                                    evt.splice(evt.indexOf(ref), 1);
+                                }
+
+                                // Se a referência do tipo do evento estiver vazia, deletá-la
+                                if (evt.length <= 0) {
+                                    delete eventRemoveStack[type];
+                                }
+
+                                console.log(eventRemoveStack);
+
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                console.log("-----------------\npilha: ", eventRemoveStack);
+            }
+        }, this.elements);
+    };
+
     ///////////// .siblings ////////////////////
     /**
      * * Aponta para um ou mais elementos irmão e executa uma função *`callback`* para cada resultado obtido.
@@ -1532,62 +1600,64 @@ var AUX = (function () {
      * ----
      * @example
      * .siblings("next", function(){...})
-     * 
+     *
      * .siblings(2, function(){...})
-     * 
+     *
      * .siblings(-2, function(){...})
-     * 
+     *
      * .siblings(".foo", function(){...})
      */
     AUX.prototype.siblings = function (refKey, handler) {
-        __.err('.siblings').to(refKey, "string, number").to(handler, "function").done()
+        __.err(".siblings")
+            .to(refKey, "string, number")
+            .to(handler, "function")
+            .done();
 
         to((root) => {
-            x.res = []
-            x.siblingList = [...root.parentNode.children]
-            x.index = x.siblingList.indexOf(root)
+            x.res = [];
+            x.siblingList = [...root.parentNode.children];
+            x.index = x.siblingList.indexOf(root);
 
-            if (__.type(refKey) == 'string') {
+            if (__.type(refKey) == "string") {
                 //Obter irmão por chaves string
                 switch (refKey) {
                     case "next":
-                        x.res.push(root.nextElementSibling)
-                        break
+                        x.res.push(root.nextElementSibling);
+                        break;
                     case "prev":
-                        x.res.push(root.previousElementSibling)
-                        break
+                        x.res.push(root.previousElementSibling);
+                        break;
                     case "all-next":
-                        x.res.push(...x.siblingList.slice(x.index + 1))
-                        break
+                        x.res.push(...x.siblingList.slice(x.index + 1));
+                        break;
                     case "all-prev":
-                        x.res.push(...x.siblingList.slice(0, x.index))
-                        break
+                        x.res.push(...x.siblingList.slice(0, x.index));
+                        break;
                     case "all":
-                        x.res.push(...x.siblingList.filter(e=> e !== root))
-                        break
-        
+                        x.res.push(...x.siblingList.filter((e) => e !== root));
+                        break;
                 }
 
                 //Obter irmão por seletor CSS | Verificar se nenhum elemento foi obito por chave string.
                 if (x.res.length <= 0) {
-                    x.nodes = [...root.parentNode.querySelectorAll(refKey)]
-                    x.res.push(...x.nodes.filter(e=> e !== root));
+                    x.nodes = [...root.parentNode.querySelectorAll(refKey)];
+                    x.res.push(...x.nodes.filter((e) => e !== root));
                 }
-                
             } else {
                 //Obter irmão por chave de posição numérica
-                x.getByNumber = x.siblingList[x.index + refKey]
-                if(x.getByNumber){x.res.push(x.getByNumber)}
+                x.getByNumber = x.siblingList[x.index + refKey];
+                if (x.getByNumber) {
+                    x.res.push(x.getByNumber);
+                }
             }
 
             to((item) => {
-                handler(item)
-            }, x.res)
-            
-        }, this.elements)
-        clear(x)
-        return this
-    }
+                handler(item);
+            }, x.res);
+        }, this.elements);
+        clear(x);
+        return this;
+    };
 
     ////////// .closest /////////////////////
     /**
@@ -1604,16 +1674,19 @@ var AUX = (function () {
      * .closest(".parent-2", function(){...})
      */
     AUX.prototype.closest = function (selectors, handler) {
-        __.err(".closest").to(selectors, "string").to(handler, "function").done()
+        __.err(".closest")
+            .to(selectors, "string")
+            .to(handler, "function")
+            .done();
         to((root) => {
-            x.res = root.closest(selectors)
+            x.res = root.closest(selectors);
             if (x.res) {
-                handler(x.res)
+                handler(x.res);
             }
-        }, this.elements)
-        clear(x)
-        return this
-    }
+        }, this.elements);
+        clear(x);
+        return this;
+    };
 
     //////////// .parent ////////////////
     /**
@@ -1626,18 +1699,17 @@ var AUX = (function () {
      * .parent(function(){...})
      */
     AUX.prototype.parent = function (handler) {
-        __.err('.parent').to(handler, 'function').done()
+        __.err(".parent").to(handler, "function").done();
         to((root) => {
-            x.parent = root.parentElement
+            x.parent = root.parentElement;
             if (x.parent) {
-                handler(x.parent) 
+                handler(x.parent);
             }
-            
-        }, this.elements)
+        }, this.elements);
 
-        clear(x)
-        return this
-    }
+        clear(x);
+        return this;
+    };
 
     //////////// .ancestors //////////////
     /**
@@ -1651,19 +1723,21 @@ var AUX = (function () {
      * .ancestors(function(){...})
      */
     AUX.prototype.ancestors = function (handler) {
-       __.err('.ancestors').to(handler, "function").done()
+        __.err(".ancestors").to(handler, "function").done();
         to((root) => {
-            x.parent = root
+            x.parent = root;
             while (true) {
-                x.parent = x.parent.parentElement
-                if (!x.parent) { break }
-                handler(x.parent)
+                x.parent = x.parent.parentElement;
+                if (!x.parent) {
+                    break;
+                }
+                handler(x.parent);
             }
-        }, this.elements)
-        clear(x)
-        return this
-    }
-    
+        }, this.elements);
+        clear(x);
+        return this;
+    };
+
     /////////// .childPath /////////////
     /**
      * * Percorre o ramo de elementos filhos até chegar em um elemento especificado em *`selector`* e, se encontrado, executa uma função *`callback`* para cada elemento do ramo em que a busca passou até chegar nele.
@@ -1680,36 +1754,42 @@ var AUX = (function () {
      * .childPath("#node-10", function(){...})
      */
     AUX.prototype.childPath = function (selector, handler) {
-        __.err(".childPath").to(selector, "string, HTMLElement").to(handler, "function").done()
+        __.err(".childPath")
+            .to(selector, "string, HTMLElement")
+            .to(handler, "function")
+            .done();
         to((root) => {
-            x.pathList = []
+            x.pathList = [];
 
             //Verificar se foi passado um seletor ou elemento
-            if (__.type(selector) == 'string') {
-                x.pathList.push(root.querySelector(selector))
-            } else { x.pathList.push(selector) }
-            
+            if (__.type(selector) == "string") {
+                x.pathList.push(root.querySelector(selector));
+            } else {
+                x.pathList.push(selector);
+            }
+
             //Obter lista de caminho até o destino
-            for (let i = 0; i < x.pathList.length; i++){
-                x.newPath = x.pathList[i]
+            for (let i = 0; i < x.pathList.length; i++) {
+                x.newPath = x.pathList[i];
                 if (x.newPath /*&& x.newPath.parentElement !== root*/) {
-                    x.pathList.push(x.newPath.parentElement)
-                } else {break}
+                    x.pathList.push(x.newPath.parentElement);
+                } else {
+                    break;
+                }
             }
 
             //Percorrer lista do fim para o início
-            for (let i = 0; i < x.pathList.length; i++){
-                x.res = x.pathList[(x.pathList.length - i) - 1]
+            for (let i = 0; i < x.pathList.length; i++) {
+                x.res = x.pathList[x.pathList.length - i - 1];
                 if (x.res) {
-                    handler(x.res)
+                    handler(x.res);
                 }
             }
-            
-        }, this.elements)
+        }, this.elements);
 
-        clear(x)
-        return this
-    }
+        clear(x);
+        return this;
+    };
 
     // END OF LIB ------------------------------------------------------
     return AUX;
