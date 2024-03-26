@@ -82,48 +82,57 @@ var AUX = (function () {
     /**Armazena os ouvintes de eventos que foram marcados para serem removidos posteriormente */
     var eventRemoveStack = {};
     /** Responsável por adicionar referências de ouvintes à pilha de remoção de eventos */
-    const addToRemoveStack = function ({ root, type, handler, fn, options = {} }) {
+    const addToRemoveStack = function ({
+        root,
+        type,
+        handler,
+        fn,
+        options = {},
+    }) {
         // Pilha de remoção de eventos // Adicionar somente se a função possuir nome ou se options.times não for definida.
-            if (options.removeStack && handler.name && options.times === undefined) {
-            
-                //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
-                if (!eventRemoveStack[type]) {
-                    eventRemoveStack[type] = [];
-                }
+        if (
+            options.removeStack &&
+            handler.name &&
+            options.times === undefined
+        ) {
+            //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
+            if (!eventRemoveStack[type]) {
+                eventRemoveStack[type] = [];
+            }
 
-                // Adicionar referencia ao elemento // Verificar se elemento já não está na lista
-                options.isOnStack = (function () {
-                    for (let i = 0; i < eventRemoveStack[type].length; i++) {
-                        if (eventRemoveStack[type][i].target === root) {
-                            options.targetId = i; // Informar onde a referencia do elemento está
-                            return true;
-                        }
+            // Adicionar referencia ao elemento // Verificar se elemento já não está na lista
+            options.isOnStack = (function () {
+                for (let i = 0; i < eventRemoveStack[type].length; i++) {
+                    if (eventRemoveStack[type][i].target === root) {
+                        options.targetId = i; // Informar onde a referencia do elemento está
+                        return true;
                     }
-
-                    return false;
-                })();
-
-                // Se referencia ao elemento já estiver guardado apenas adicionar as referncias aos ouvintes
-                if (options.isOnStack) {
-                    eventRemoveStack[type][options.targetId].list.push({
-                        fn: fn,
-                        handler: handler,
-                    });
-                } else {
-                    // Se não criar referencia nova
-                    eventRemoveStack[type].push({
-                        target: root,
-                        list: [
-                            {
-                                fn: fn,
-                                handler: handler,
-                            },
-                        ],
-                    });
                 }
+
+                return false;
+            })();
+
+            // Se referencia ao elemento já estiver guardado apenas adicionar as referncias aos ouvintes
+            if (options.isOnStack) {
+                eventRemoveStack[type][options.targetId].list.push({
+                    fn: fn,
+                    handler: handler,
+                });
+            } else {
+                // Se não criar referencia nova
+                eventRemoveStack[type].push({
+                    target: root,
+                    list: [
+                        {
+                            fn: fn,
+                            handler: handler,
+                        },
+                    ],
+                });
+            }
         }
-    }
-    console.log(eventRemoveStack)
+    };
+    console.log(eventRemoveStack);
 
     //========================================MÉTODOS PRINCIPAIS==================================================//
 
@@ -1435,7 +1444,7 @@ var AUX = (function () {
      * @example
      * .on("click", function ({get, def}, evt){...})
      * .on("click", function ({get, def}, evt){...}, {times: 3}) // Dispara o evento somente 3 vezes.
-     * 
+     *
      * const myHandler = function({get, def}, evt){...}
      * .on("click", myHanlder, {removeStack: true}) // Adiciona o ouvinta em uma pilha de espera de remoção.
      */
@@ -1445,33 +1454,34 @@ var AUX = (function () {
             .to(handler, "function")
             .to(options, "boolean, object", false)
             .done();
-        
-        
-        if(options.times !== undefined){var timeStack = []}
-        
+
+        if (options.times !== undefined) {
+            var timeStack = [];
+        }
+
         // Função ouvinte real
         var fn = function (evt) {
-            
             if (options.times !== undefined && timeStack !== null) {
-                for(let i = 0; i < timeStack.length; i++){
+                for (let i = 0; i < timeStack.length; i++) {
                     if (timeStack[i].target === this) {
-                        timeStack[i].count++
+                        timeStack[i].count++;
                         if (timeStack[i].count >= options.times) {
-
                             // Remover ouvinte ao encerrar options.times
                             this.removeEventListener(type, fn);
-                            
+
                             // Deletar referencia do contador
-                            timeStack.splice(timeStack.indexOf(timeStack[i]), 1)
-                            timeStack.length <= 0? timeStack = null : null
-                            
+                            timeStack.splice(
+                                timeStack.indexOf(timeStack[i]),
+                                1
+                            );
+                            timeStack.length <= 0 ? (timeStack = null) : null;
                         }
 
-                        break
+                        break;
                     }
                 }
             }
-            
+
             handler(this, evt);
         };
 
@@ -1480,8 +1490,8 @@ var AUX = (function () {
             if (options.times !== undefined) {
                 timeStack.push({
                     target: root,
-                    count: 0
-                })
+                    count: 0,
+                });
             }
 
             // Adicionar à pilha de remoção.
@@ -1490,11 +1500,10 @@ var AUX = (function () {
                 type: type,
                 root: root,
                 handler: handler,
-                options: options
-            })
+                options: options,
+            });
 
             root.addEventListener(type, fn, options);
-
         }, this.elements);
 
         return this;
@@ -1505,17 +1514,22 @@ var AUX = (function () {
      * * Adiciona ao elemento múltiplos ouvintes de eventos declarando-os como métodos de um objeto passado em *`listeners`*.
      * * O evento deve ser passado como um método nomeado com o tipo do evento ou uma propriedade nomeada com o tipo do evento que recebe uma função de valor.
      * * Nota: Não é possível declarar dois eventos de mesmo tipo com o mesmo nome de método ou propriedade a menos que haja diferenciação de letras maísculas e minúsculas entre elas.
+     * > * **Nota:** Ouvintes de eventos adicionados através deste método precisam ser adicionados em uma *`pilha de espera de remoção`* para que sejam removidos posteriormente por *`AUX.removeEvent()`* caso contrário o ouvinte não poderá ser removido. Para isso defina *`true`* em *`options.removeStack`* para adicioná-los à pilha de espera. Ouvintes que foram declarados com *`options.times`* também não são adicionados à pilha pois sua remoção já está automaticamente programada.
      * @example
      * .events({
-     *      mouseEnter(){},
-     *      mouseenter(){}
+     *      mouseEnter(){...},
+     *      mouseenter(){...}
      * })
      * @param {EventListeners} listeners
      * * Um objeto que define os ouvintes de eventos que serão adicionados ao elemento. Cada ouvinte deve ser declarado como um método nomeado como o tipo do evento.
      * -----
-     * @param {{capture: boolean, once: boolean, passive: boolean, signal: AbortSignal}} options
+     * @param {boolean | EventOptions | {times: number, removeStack: boolean}} options
      * *`(opcional)`*
      * * Um objeto que especifica características sobre os ouvintes de eventos. Se passado, todos os ouvintes declarados receberão esta mesma configuração. Deve receber as seguintes propriedades opcionais:
+     *
+     * > * **`removeStack:`** (propriedade única da biblioteca) Um boolean que indica se este ouvinte será removido futuramente. Se sim, o ouvinte é adicionado em uma *`pilha de espera de remoção`* e pode ser removido com o método *`AUX.removeEvent()`*. Se a função *`callback`* passada for anônima, mesmo com *`options.removeStack: true`* o ouvinte não poderá ser adicionado à pilha pois precisa possuir uma referência ou no mínimo um nome para a remoção posterior.
+     *
+     * > * **`times:`** (propriedade única da biblioteca) Um número que indica quantas vezes os ouvintes devem ser invocados após serem adicionados. Após a quantidade máxima de invocação determinada for atingida os ouvintes serão automaticamente removidos. Nota: Estes ouvintes não poderão ser adicionados à *`pilha de espera de remoção`* mesmo com *`options.removeStack`* definido.
      *
      * > * **`capture:`** Um valor booleano que indica que eventos deste tipo serão despachados para o registrado listener antes de serem despachados para qualquer um *`EventTarget`* abaixo dele na árvore DOM. Se não for especificado, o padrão é false.
      *
@@ -1526,50 +1540,59 @@ var AUX = (function () {
      * > * **`signal:`** Um *`AbortSignal`*. O souvintes serão removidos quando o método *`AbortSignal`* do objeto fornecido *`abort()`* for chamado. Se não for especificado, *`AbortSignal`* será associado ao ouvinte.
      * ------
      * * Nota: Consultar documentação de *`.addEventListener`* parâmetro *`options`* para entender melhor o uso.
-     *
+     * ----
      * @example
      * .events({
      *      click(item, evt){...},
      *      mouseOver(item, evt){...}
      * })
      *
-     * //Uso do parâmetro options
      * .events({
      *      click(item, evt){...}
-     * }, {once: true})
+     * }, {times: 3}) // Dispara o evento somente 3 vezes
+     *
+     * .events({
+     *      click(item, evt){...}
+     * }, {removeStack: true}) // Adiciona o ouvinte à uma pilha de espera de remoção.
      */
     AUX.prototype.events = function (listeners, options = {}) {
         let evtKeys = Object.keys(listeners);
         // Função ouvinte real
-        let fn
-        if (options.times !== undefined) {var timeList = {}}
+        let fn;
+        if (options.times !== undefined) {
+            var timeList = {};
+        }
         to((root, idx) => {
-
             // Adicionar referência de tempo de expiração para cada elemento.
             if (options.times !== undefined) {
-                timeList[idx] = {}  
+                timeList[idx] = {};
             }
 
             for (let i = 0; i < evtKeys.length; i++) {
-                x.name = evtKeys[i].toLowerCase()
+                x.name = evtKeys[i].toLowerCase();
 
                 fn = function (evt) {
                     if (options.times !== undefined) {
                         timeList[idx][evtKeys[i]].count++;
                     }
-    
+
                     listeners[evtKeys[i]](this, evt);
 
-                    if (options.times !== undefined && timeList[idx][evtKeys[i]].count >= options.times) {
-                        this.removeEventListener(evtKeys[i].toLowerCase(), timeList[idx][evtKeys[i]].fn);
+                    if (
+                        options.times !== undefined &&
+                        timeList[idx][evtKeys[i]].count >= options.times
+                    ) {
+                        this.removeEventListener(
+                            evtKeys[i].toLowerCase(),
+                            timeList[idx][evtKeys[i]].fn
+                        );
 
                         // Remover referência do método
                         delete timeList[idx][evtKeys[i]];
                         // Se não houver mais referências de métodos, deletar referência ao root
                         if (Object.keys(timeList[idx]) <= 0) {
-                            delete timeList[idx]
+                            delete timeList[idx];
                         }
-                        
                     }
                 };
 
@@ -1577,22 +1600,21 @@ var AUX = (function () {
                 if (options.times !== undefined) {
                     timeList[idx][evtKeys[i]] = {
                         fn: fn,
-                        count: 0
+                        count: 0,
                     };
                 }
-    
+
                 // Adicionar ouvinte à pilha de remoção
                 addToRemoveStack({
                     type: x.name,
                     fn: fn,
                     handler: listeners[evtKeys[i]],
                     root: root,
-                    options: options
+                    options: options,
                 });
-                
-                root.addEventListener(x.name, fn ,options);
-            }
 
+                root.addEventListener(x.name, fn, options);
+            }
         }, this.elements);
         clear(x);
         return this;
@@ -1602,7 +1624,7 @@ var AUX = (function () {
     AUX.prototype.removeEvent = function (type, handler, options = {}) {
         type = type.toLowerCase();
         var evt;
-        
+
         to((root) => {
             evt = eventRemoveStack[type];
             // Obter referência do tipo do evento e elemento na pilha de remoção de eventos
