@@ -21,44 +21,23 @@ const childs = [...two.children]
 
 const my = AUX(".box")
 const btn = AUX('#btn')
-const but = AUX("#btn")
+const bro = AUX("#btn, .two, #ch-0")
 
-btn.on("click", function myEv() {
-    console.log('-----\nclick2')
-},{ removeStack: true, times: 3 });
-
-function clickEvt(e,i) {
-    console.log('click')
-}
-
-btn.on('click', clickEvt, { removeStack: true })
-
-var cont = 0
-function mouseEnter() {
-    console.log('mouse enter')
-    cont++
-    console.log(cont)
-    if (cont >= 3) {
-        btn.removeEvent("mouseenter", mouseEnter)
-        but.removeEvent('click', 'myEv')
+let cont = 0
+let cont2 = 0
+btn.events({
+    click() {
+        console.log('------\nclick')
+        cont2++;
+        if (cont2 >= 5) {
+            bro.removeEvent("click", "click");
+        }
+    },
+    Click() {
+        console.log('Click2')
+        cont++
+        if (cont >= 3) {
+            bro.removeEvent('click', "Click")
+        }
     }
-}
-btn.removeEvent("click", clickEvt)
-
-but.on("mouseenter", mouseEnter, {removeStack: true})
-
-
-
-
-
-// teste(btn.elements[0], 'click', () => {
-//     console.log('click')
-// }, 4)
-
-
-
-//btn.on('click', evt, { removeStack: true })
-//btn.on("click", ()=>{}, { removeStack: 'clickEvt' });
-
-
-
+}, {removeStack: true, times: 6})

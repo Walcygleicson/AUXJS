@@ -85,7 +85,7 @@ var AUX = (function () {
     const addToRemoveStack = function ({ root, type, handler, fn, options = {} }) {
         // Pilha de remoção de eventos // Adicionar somente se a função possuir nome ou se options.times não for definida.
             if (options.removeStack && handler.name && options.times === undefined) {
-                console.log(handler.name);
+            
                 //Verificar se uma pilha do tipo já foi adicionado, se não, adicionar
                 if (!eventRemoveStack[type]) {
                     eventRemoveStack[type] = [];
@@ -121,7 +121,8 @@ var AUX = (function () {
                         ],
                     });
                 }
-            }
+        }
+        console.log('add to: ', eventRemoveStack)
     }
 
     //========================================MÉTODOS PRINCIPAIS==================================================//
@@ -1445,17 +1446,21 @@ var AUX = (function () {
             .to(options, "boolean, object", false)
             .done();
         
+        let count = 0 //
+        
         // Função ouvinte real
         var fn = function (evt) {
-            options.times !== undefined ? options.times-- : null;
-            handler(options.evtTarget, evt);
-            if (options.times === 0) {
-                options.evtTarget.removeEventListener(type, fn);
+            options.times !== undefined ? count++ : null;
+            handler(this, evt);
+            
+            if (count >= options.times) {
+                this.removeEventListener(type, fn);
+                count = 0
             }
         };
 
         to((root) => {
-
+           
             // Adicionar à pilha de remoção.
             addToRemoveStack({
                 fn: fn,
@@ -1465,7 +1470,6 @@ var AUX = (function () {
                 options: options
             })
 
-            options.evtTarget = root;
             root.addEventListener(type, fn, options);
 
         }, this.elements);
@@ -1512,18 +1516,60 @@ var AUX = (function () {
      * }, {once: true})
      */
     AUX.prototype.events = function (listeners, options = {}) {
-        x.evt = Object.keys(listeners);
-        to((root) => {
-            for (let i = 0; i < x.evt.length; i++) {
-                x.name = x.evt[i];
-                x.method = listeners[x.name];
-                x.name = x.name.toLowerCase();
-                root.addEventListener(
-                    x.name,
-                    x.method.bind(null, root),
-                    options
-                );
+        let evtKeys = Object.keys(listeners);
+        // Função ouvinte real
+        let fn
+        if (options.times !== undefined) {var timeList = {}}
+        to((root, idx) => {
+
+            // Adicionar referência de tempo de expiração para cada elemento.
+            if (options.times !== undefined) {
+                timeList[idx] = {}  
             }
+
+            for (let i = 0; i < evtKeys.length; i++) {
+                x.name = evtKeys[i].toLowerCase()
+
+                fn = function (evt) {
+                    if (options.times !== undefined) {
+                        timeList[idx][evtKeys[i]].count++;
+                    }
+    
+                    listeners[evtKeys[i]](this, evt);
+
+                    if (options.times !== undefined && timeList[idx][evtKeys[i]].count >= options.times) {
+                        this.removeEventListener(evtKeys[i].toLowerCase(), timeList[idx][evtKeys[i]].fn);
+
+                        // Remover referência do método
+                        delete timeList[idx][evtKeys[i]];
+                        // Se não houver mais referências de métodos, deletar referência ao root
+                        if (Object.keys(timeList[idx]) <= 0) {
+                            delete timeList[idx]
+                        }
+                        
+                    }
+                };
+
+                // Adicionar referencia aos métodos e contador
+                if (options.times !== undefined) {
+                    timeList[idx][evtKeys[i]] = {
+                        fn: fn,
+                        count: 0
+                    };
+                }
+    
+                // Adicionar ouvinte à pilha de remoção
+                addToRemoveStack({
+                    type: x.name,
+                    fn: fn,
+                    handler: listeners[evtKeys[i]],
+                    root: root,
+                    options: options
+                });
+                
+                root.addEventListener(x.name, fn ,options);
+            }
+
         }, this.elements);
         clear(x);
         return this;
@@ -1533,6 +1579,7 @@ var AUX = (function () {
     AUX.prototype.removeEvent = function (type, handler, options = {}) {
         type = type.toLowerCase();
         var evt;
+        
         to((root) => {
             evt = eventRemoveStack[type];
             // Obter referência do tipo do evento e elemento na pilha de remoção de eventos
