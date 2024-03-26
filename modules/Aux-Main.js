@@ -1621,6 +1621,26 @@ var AUX = (function () {
     };
 
     //////////// .removeEvent /////////////
+    /**
+     * * Remove um ouvinte de evento previamente registrado e adicionado à *`pilha de espera de remoção`*.
+     * > **`Nota:`** Ouvintes de eventos só são removíveis com este método se foram adicionados com *`AUX.on()`* ou *`AUX.events()`*, os mesmos só são removíveis com este método se estiverem na *`pilha de remoção`* previamente definidos nos parâmetros *`options.removeStack`* dos métodos de inserção de eventos.
+     * -----
+     * @param {string} type
+     * * Uma *`string`* que representa o tipo do evento a ser removido.
+     * ----
+     * @param {Function | string} handler
+     * * Uma referência a um ouvinte de evento ligado ao tipo do evento fornecido. Podendo ser a função que captura o evento, ou uma *`string`* que representa o nome da função.
+     * > **`Nota:`** Só é recomendável usar os nomes ao invés da própria função como referência quando a função foi declarada imediatamente no método *`AUX.on()`* (*`funciona apenas com função nomeada`*) ou como um método direto de um objeto em *`AUX.events()`*.
+     * ----
+     * @param {boolean | {capture: boolean}} options
+     * *`(opcional)`*
+     * * Um objeto de opções que especifica características sobre o ouvinte de eventos. As opções disponíveis são:
+     * > **`capture:`** Um valor booleano que especifica se o ouvinte de evento a ser removido está registrado como ouvinte de captura ou não. Se este parâmetro estiver ausente, o valor padrão *`false´* será assumido.
+     * -----
+     * @example
+     * .removeEvent("click", myClickFunc)
+     * .removeEvent("mouseenter", "mouseEnter")
+     */
     AUX.prototype.removeEvent = function (type, handler, options = {}) {
         type = type.toLowerCase();
         var evt;
