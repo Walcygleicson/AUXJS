@@ -23,21 +23,3 @@ const my = AUX(".box")
 const btn = AUX('#btn')
 const bro = AUX("#btn, .two, #ch-0")
 
-let cont = 0
-let cont2 = 0
-btn.events({
-    click() {
-        console.log('------\nclick')
-        cont2++;
-        if (cont2 >= 5) {
-            bro.removeEvent("click", "click");
-        }
-    },
-    Click() {
-        console.log('Click2')
-        cont++
-        if (cont >= 3) {
-            bro.removeEvent('click', "Click")
-        }
-    }
-}, {removeStack: true, times: 6})

@@ -122,8 +122,8 @@ var AUX = (function () {
                     });
                 }
         }
-        console.log('add to: ', eventRemoveStack)
     }
+    console.log(eventRemoveStack)
 
     //========================================MÉTODOS PRINCIPAIS==================================================//
 
@@ -1446,21 +1446,44 @@ var AUX = (function () {
             .to(options, "boolean, object", false)
             .done();
         
-        let count = 0 //
+        
+        if(options.times !== undefined){var timeStack = []}
         
         // Função ouvinte real
         var fn = function (evt) {
-            options.times !== undefined ? count++ : null;
-            handler(this, evt);
             
-            if (count >= options.times) {
-                this.removeEventListener(type, fn);
-                count = 0
+            if (options.times !== undefined && timeStack !== null) {
+                for(let i = 0; i < timeStack.length; i++){
+                    if (timeStack[i].target === this) {
+                        timeStack[i].count++
+                        if (timeStack[i].count >= options.times) {
+
+                            // Remover ouvinte ao encerrar options.times
+                            this.removeEventListener(type, fn);
+                            
+                            // Deletar referencia do contador
+                            timeStack.splice(timeStack.indexOf(timeStack[i]), 1)
+                            timeStack.length <= 0? timeStack = null : null
+                            
+                        }
+
+                        break
+                    }
+                }
             }
+            
+            handler(this, evt);
         };
 
         to((root) => {
-           
+            // Adicionar um contador para cada elemento
+            if (options.times !== undefined) {
+                timeStack.push({
+                    target: root,
+                    count: 0
+                })
+            }
+
             // Adicionar à pilha de remoção.
             addToRemoveStack({
                 fn: fn,
@@ -1613,8 +1636,6 @@ var AUX = (function () {
                                     delete eventRemoveStack[type];
                                 }
 
-                                console.log(eventRemoveStack);
-
                                 break;
                             }
                         }
@@ -1622,8 +1643,6 @@ var AUX = (function () {
                         break;
                     }
                 }
-
-                console.log("-----------------\npilha: ", eventRemoveStack);
             }
         }, this.elements);
     };
