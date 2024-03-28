@@ -1,3 +1,5 @@
+import"../internal/@interfaces.js"
+import { AUXProperties } from "../internal/@interfaces.js";
 
 /**
  * @typedef {Selector|ElementList} ElementReference
@@ -16,6 +18,11 @@
  * @typedef {number|string|HTMLElement|null} PositionReference Uma referência de posição de um elemento HTML dentro de uma lista de elementos
  * 
  * @typedef {number|ElementList} elementListReference
+ */
+
+////////////////////// UNIDADE DE MEDIDA CSS ///////////////////////
+/**
+ * @typedef {"cm" | "mm" | "in" | "pc" | "pt" | "px" | "em" | "ex" | "ch" | "rem" | "lh" | "rlh" | "vw" | "vh" | "vmin" | "vmax" | "vb" | "vi" | "svw" | "svh" | "lvw" | "lvh" | "dvw" | "dvh" | "%" | "cap" | "fr" | "cqb" | "cqh" | "cqi" | "cqmax" | "cqmin" | "rex" | "ic" | "q"} CSSUnit
  */
 
 /**
@@ -269,9 +276,8 @@
  */
 
 /**
- * @callback _CallbackFunction
- * @param {ElementTools} source 555
- * @param {Function} done 555555
+ * @callback HandlerFunction
+ * @param {AUXProperties} source
  */
 /////////////// ARGUMENTOS DE CONTROLE ////////////////////
 /**

@@ -1,17 +1,15 @@
-import __ from "../@/@internal.js";
-import("../@/@docs.js")
-"use strict"
-
-
-
-
+import __ from "../@/internal/@utils.js";
+import {AUXProperties} from "../@/internal/@interfaces.js"
+import("../@/docs/@Aux-Typedef.js");
+"use strict";
+/**
+ * @typedef {import("../@/docs/@Aux-Typedef.js").HandlerFunction} HandlerFunction
+ * @typedef {import("../@/docs/@Aux-Typedef.js").CSSUnit} CSSUnit
+ * @typedef {import("../@/docs/@Aux-Typedef.js").StyleProperties} StyleProperties
+ * 
+ */
 
 function dom(elements) {
-
-
-
-
-
     dom.toggleStyles = function (styleProps) {};
 
     dom.createStyle = function (CSSRules) {};
@@ -21,16 +19,9 @@ function dom(elements) {
     dom.toggleCSS = function (selector, styleProps) {};
 
 
-    dom.on = function (eventName, handler, useCapture) {};
+    
 
-    dom.addEvents = function (eventsObject) {};
-
-    dom.removeEvents = function (eventName, func) {};
-
-    dom.mouseInOut = function (handler) {};
-
-    dom.focusInOut = function (handler) {};
-
+    
 
     dom.toggleChilds = function (childsA, childsB) {};
     dom.toggle = function (elementB) {};
@@ -39,8 +30,7 @@ function dom(elements) {
     dom.click = function () {};
     dom.focus = function (options) {};
 
-    dom.insertTo = function (targets, position) {};
-    dom.cloneTo = function (targets, options) {};
+  
 
     dom.toView = function () {};
 
@@ -52,13 +42,7 @@ function dom(elements) {
     dom.toggleVar = function (varNameA, varNameB) {};
     dom.mediaQuery = function (media, styleProps) {};
 
-    console.log("box-temp dom.js", x);
-    return Object.freeze(dom);
 }
-
-
-
-
 
 var AUX = (function () {
     const version = "1.0.0";
@@ -78,6 +62,8 @@ var AUX = (function () {
 
         CLASSLIST: "string, array, object",
     };
+
+    //================ FUNÇÕES INTERNAS ==============================================//
 
     /**Armazena os ouvintes de eventos que foram marcados para serem removidos posteriormente */
     var eventRemoveStack = {};
@@ -132,10 +118,31 @@ var AUX = (function () {
             }
         }
     };
-    console.log(eventRemoveStack);
 
-    //========================================MÉTODOS PRINCIPAIS==================================================//
+    /**Intera sobre os elementos obtidos
+     * @param {(root: HTMLElement)=>void} fn
+     */
+    const to = function (fn, thisElements) {
+        var i = 0;
+        if (thisElements.length > 1) {
+            while (true) {
+                fn(thisElements[i], i++);
+                if (i >= thisElements.length) break;
+            }
+        } else {
+            fn(thisElements[0], i);
+        }
+    };
 
+    /**Remove propriedades de um object */
+    const clear = function (obj) {
+        Object.keys(obj).forEach((prop) => {
+            delete obj[prop];
+        });
+    };
+    //================ MÉTODOS PÚBLICOS ===========================================//
+    ///
+    ///
     ////// AUX Constructor Lib ////////////////
     /**
      * **AUX.JS**
@@ -162,6 +169,7 @@ var AUX = (function () {
         if (!(this instanceof AUX)) {
             return new AUX(selectors);
         }
+        const thisObj = this;
         //Tratar erros de argumento
         const error = __.err("AUX");
         error.to(selectors, t.ELREF).isVoid(selectors, 1).done();
@@ -178,7 +186,10 @@ var AUX = (function () {
          */
         this.getStyle = window.getComputedStyle(this.elements[0]);
 
-        /** * Objeto de métodos que inserem templates genéricos*/
+        /**
+         * * Objeto de métodos que inserem templates genéricos pré-montados sem estilos aplicados
+         *
+         */
         this.insert = {
             /**
              * * Cria uma tabela genérica sem estilos.
@@ -235,7 +246,70 @@ var AUX = (function () {
                     }
                 }, elements);
                 clear(x);
-                return this;
+                return thisObj.insert;
+            },
+        };
+
+        /** * Fornece métodos que adiciona ou remove elementos da lista de manipulação principal. */
+        this.list = {
+            /**
+             * * Adiciona novos elementos HTML à lista de manipulação.
+             * ---------
+             * @param {ElementReference} selectors
+             * * Deve receber uma referência a um ou mais elementos HTML existentes no DOM. Podendo ser:
+             * > -------
+             * > * Uma String que representa um seletor CSS (ou múltiplos seletores separados por vírgula) válido que aponte para um ou mais elementos existentes no DOM.
+             * > * Um Array ou Object contendo seletores CSS válidos e/ou elementos HTML para manipulação.
+             * > * Um HTMLElement ou NodeList ou HTMLCollection para manipulação.
+             * -----
+             * * Nota: Qualquer valor que não seja ou não faça nenhum tipo de referência a algum elemento HTML resultará em um erro!
+             * ---
+             */
+            add(selectors) {
+                var err = __.err("AUX.list.add");
+                err.to(selectors, t.ELREF).isVoid(selectors).done();
+                thisObj.elements.push(...__.ex(selectors, err));
+                err = null;
+                return thisObj;
+            },
+
+            /**
+             * * Remove um ou mais elementos da lista de manipulação. Pode selecionar os elementos alvos da lista através de seus seletores CSS ou seus índices e outros.
+             * -----
+             * @param {elementListReference} whichElements
+             * * Uma referência do elemento ou sua posição (index) na lista de elementos para remoção. Podendo ser:
+             *
+             * > * Um número de índice ou Array de índices para múltiplas remoções
+             *
+             * > * Um seletor CSS que aponte para algum elemento da lista ou Array de seletores para múltiplas remoções.
+             *
+             * > * O elemento existente na lista ou Array de elementos.
+             * -----
+             * **Alguns exemplos de uso:**
+             * @example
+             * .remove(1) // Remove o segundo elemento da lista
+             * // Ou
+             * .remove([0,1]) // Remove o primeiro e o segundo elemento
+             * // Ou
+             * .remove(".my-div") // Remove os elementos correspondentes ao seletor
+             * // Ou
+             * .remove([".my-div", "#btn"])
+             */
+            remove(whichElements) {
+                __.err("AUX.list.remove")
+                    .to(whichElements, "number, string, array")
+                    .done();
+                whichElements = __.getElementsOfList(
+                    whichElements,
+                    thisObj.elements
+                );
+                thisObj.elements = thisObj.elements.filter((e) => {
+                    if (!whichElements.includes(e)) {
+                        return e;
+                    }
+                });
+
+                return thisObj;
             },
         };
     };
@@ -275,39 +349,18 @@ var AUX = (function () {
         },
     };
 
-    //####### FUNÇÕES INTERNAS ########//
-    /**Intera sobre os elementos obtidos
-     * @param {(root: HTMLElement)=>void} fn
-     */
-    const to = function (fn, thisElements) {
-        var i = 0;
-        if (thisElements.length > 1) {
-            while (true) {
-                fn(thisElements[i], i++);
-                if (i >= thisElements.length) break;
-            }
-        } else {
-            fn(thisElements[0], i);
-        }
-    };
-
-    /**Remove propriedades de um object */
-    const clear = function (obj) {
-        Object.keys(obj).forEach((prop) => {
-            delete obj[prop];
-        });
-    };
-    //############### END #################//
-
-    //@ EXTENDER BIBLIOTECA ************************
+    //************* EXTENDER BIBLIOTECA ************************
 
     /////////////////// .text /////////////////////
     /**
-     * * Define o contéudo de texto dos elementos. Todos os nós filhos destes elementos serão excluídos e substituídos pelo texto.
+     * * Define o contéudo de texto do elemento. Todos os nós filhos deste elemento serão excluídos e substituídos pelo valor fornecido.
      * -----
-     * @param {*} text
-     * * `(opcional)` - O conteúdo de texto que será inserido no elemento alvo. Se nenhum argumento for passado todo o conteúdo do elemento alvo será limpo (substituído por uma string vazia).
-     * ---
+     * @param {string} text
+     * *`(opcional)`*
+     * * O conteúdo de texto que será inserido no elemento alvo. Se nenhum argumento for passado todo o conteúdo do elemento alvo será limpo (substituído por uma string vazia).
+     * ----
+     * @example
+     * .text("Click-Me") => <button>Click-me</button>
      */
     AUX.prototype.text = function (text = "") {
         to((root) => {
@@ -318,11 +371,14 @@ var AUX = (function () {
 
     ///////// .html //////////////////////////
     /**
-     * * Define o contéudo HTML dos elementos. Todos os nós filhos destes elementos serão excluídos e substituídos pelo conteúdo passado.
+     * * Define o contéudo HTML do elemento. Todos os nós filhos deste elemento serão excluídos e substituídos pelo conteúdo fornecido.
      * ----
      * @param {string} stringHTML
+     * *`(opcional)`*
      * * O conteúdo HTML que será inserido no elemento alvo. Se nenhum argumento for passado todo o conteúdo HTML do elemento alvo será limpo (substituído por uma string vazia).
-     * ---
+     * ----
+     * @example
+     * .html("<button>Click</button>") => <div><button>Click</button></div>
      */
     AUX.prototype.html = function (stringHTML = "") {
         to((root) => {
@@ -333,15 +389,29 @@ var AUX = (function () {
 
     /////////// .style ///////////////////////////
     /**
-     * * Define as propriedades de estilo dos elementos. O estilo é aplicado inline.
+     * * Define as propriedades de estilo do elemento. O estilo é aplicado inline.
      * ----
      * @param {StyleProperties} styleProps
      * * Um objeto que define as propriedades de estilos CSS e seus valores.
      * * Obs: Usar  **`camelCase`** em nomes compostos de propriedades ao invés de separá-las com "-" (traço, sinal de menos).
      * * Exceção para declarações de variáveis que devem ser escritas da forma tradicional entre aspas `"--bgcolor": "#67cda8"`.
+     * @param {CSSUnit} defaultUnit
+     * *`(opcional)`*
+     * * Define uma unidade de medida padrão (*`px, em, pt, ...`*) quando um *`number`* for passado como valor de medida de uma propriedade CSS. Se nada for passado o padrão é *`"px"`*.
+     * * > **Nota:** Essa definição só se aplica a valores do tipo *`number`*, se um número em string for passada sem o sufixo de unidade de mediada CSS nada será aplicado.
      * ----
      * @example
+     * Exemplo de uso da unidade CSS padrão.
+     *
+     * .style({margin: 20}) => "20px" // Padrão "px"
+     * .style({margin: 20}, "em") => "20em"
+     * .style({margin: "20"}, "em") => "20" // Não se aplica
+     * .style({margin: "20em"}) => "20em"
+     *
+     * Exemplo geral.
+     *
      * .style({
+     *      padding: "10px"
      *      display: "flex",
      *      flexDirection: "column",
      *      justifyContent: "center",
@@ -350,19 +420,35 @@ var AUX = (function () {
      *      "--bg-color": "gray"
      * })
      */
-    AUX.prototype.style = function (styleProps) {
+    AUX.prototype.style = function (styleProps, defaultUnit = "px") {
+        __.err("AUX.style")
+            .to(styleProps, "object")
+            .isVoid(styleProps)
+            .to(defaultUnit, "number, string", false)
+            .done();
+
+        let propName;
         to((root) => {
             Object.keys(styleProps).forEach((prop) => {
-                root.style.setProperty(prop, styleProps[prop]);
+                propName = prop
+                    .replace(/([a-z])([A-Z])/g, "$1-$2")
+                    .toLowerCase();
+
+                root.style.setProperty(
+                    propName,
+                    __.type(styleProps[prop]) == "number"
+                        ? styleProps[prop] + defaultUnit
+                        : styleProps[prop]
+                );
             });
         }, this.elements);
-
+        propName = null;
         return this;
     };
 
     /////////////// .console //////////////////
     /**
-     * * Imprime no console do navegador os elementos obtidos por *`AUX`*.
+     * * Imprime no console do navegador os elementos da lista de manipulação principal.
      */
     AUX.prototype.console = function () {
         this.elements.length > 1
@@ -376,64 +462,9 @@ var AUX = (function () {
         return this;
     };
 
-    //////////// .add ////////////
-    /**
-     * * Adiciona novos elementos HTML à lista de elementos obtidos por *`AUX` para manipulação.*
-     * ---------
-     * @param {ElementReference} selectors
-     * * Deve receber uma referência a um ou mais elementos HTML existentes no DOM. Podendo ser:
-     * > -------
-     * > * Uma String que representa um seletor CSS (ou múltiplos seletores separados por vírgula) válido que aponte para um ou mais elementos existentes no DOM.
-     * > * Um Array ou Object contendo seletores CSS válidos e/ou elementos HTML para manipulação.
-     * > * Um HTMLElement ou NodeList ou HTMLCollection para manipulação.
-     * -----
-     * * Nota: Qualquer valor que não seja ou não faça nenhum tipo de referência a algum elemento HTML resultará em um erro!
-     */
-    AUX.prototype.add = function (selectors) {
-        var err = __.err(".add");
-        err.to(selectors, t.ELREF).isVoid(selectors).done();
-        this.elements.push(...__.ex(selectors, err));
-        err = null;
-        return this;
-    };
-
-    /////////// .remove /////////
-    /**
-     * * Remove um ou mais elementos da lista de manipulação. Pode selecionar os elementos alvos da lista através de seus seletores CSS ou seus índices e outros.
-     * -----
-     * @param {elementListReference} whichElements
-     * * Uma referência do elemento ou sua posição (index) na lista de elementos para remoção. Podendo ser:
-     *
-     * > * Um número de índice ou Array de índices para múltiplas remoções
-     *
-     * > * Um seletor CSS que aponte para algum elemento da lista ou Array de seletores para múltiplas remoções.
-     *
-     * > * O elemento existente na lista ou Array de elementos.
-     * -----
-     * **Alguns exemplos de uso:**
-     * @example
-     * .remove(1) // Remove o segundo elemento da lista
-     * // Ou
-     * .remove([0,1]) // Remove o primeiro e o segundo elemento
-     * // Ou
-     * .remove(".my-div") // Remove os elementos correspondentes ao seletor
-     * // Ou
-     * .remove([".my-div", "#btn"])
-     */
-    AUX.prototype.remove = function (whichElements) {
-        whichElements = __.getElementsOfList(whichElements, this.elements);
-        this.elements = this.elements.filter((e) => {
-            if (!whichElements.includes(e)) {
-                return e;
-            }
-        });
-
-        return this;
-    };
-
     ///////// .addClass ////////////////////////////
     /**
-     * * Adiciona um ou mais nomes de classe aos elementos da lista de manipulação.
+     * * Adiciona nomes de classe à *`lista de nomes de classe`* do elemento.
      * * Pode definir em qual posição os nomes de classe serão adiciondaos. Se n for definido os nomes serão adicionados ao final da lista de nomes de classe.
      * -----
      * @param {string|Array<string>} classNames
@@ -444,13 +475,15 @@ var AUX = (function () {
      * * Um número que represente a posição (index) em que os nomes serão adicionados na lista de classe.
      * ---
      * @example
-     * .addClass("foo")
-     * .addClass("foo, bar")
-     * .addClass(["foo", "bar", "etc"])
-     * .addClass(".foo", 1)
+     * <div class="div"></div>
+     *
+     * .addClass("foo") => <div class="div foo"></div>
+     * .addClass("foo, bar") => <div class="div foo bar"></div>
+     * .addClass(["foo", "bar"]) => <div class="div foo bar"></div>
+     * .addClass("foo", 0) => <div class="foo div"></div>
      */
     AUX.prototype.addClass = function (classNames, position = NUMB) {
-        __.err(".addClass")
+        __.err("AUX.addClass")
             .to(classNames, "string, array, object")
             .isVoid(classNames)
             .to(position, "number", false)
@@ -476,7 +509,7 @@ var AUX = (function () {
 
     ///////////// .attrs /////////////////////
     /**
-     * * Define os atributos dos elementos da lista de manipulação.
+     * * Define os atributos do elemento.
      * * Se um elemento já possuir um atributo especificado em *`attributes`* o valor deste será sobrescrito. Se um atributo especificado em *`attributes`* receber um valor *`false`* ou *`null`* este atributo será removido do elemento alvo.
      * ----
      * @param {attributesObject} attributes
@@ -493,7 +526,7 @@ var AUX = (function () {
      *
      */
     AUX.prototype.attrs = function (attributes) {
-        __.err(".attrs").to(attributes, "object").done();
+        __.err("AUX.attrs").to(attributes, "object").isVoid(attributes).done();
 
         to((root) => {
             Object.keys(attributes).forEach((name) => {
@@ -512,23 +545,24 @@ var AUX = (function () {
     /**
      * * Insere uma string que representa elementos HTML como sendo nós do tipo HTMLElement.
      * * A string não sobrescreve o contéudo HTML do elemento alvo, mas a converte em um nó do tipo HTMLElement e a insere ao final da lista de elementos filhos (ou em uma posição especificada em *`options.position`*.
+     * * Opcionalmente executa uma função *`callback`* para cada HTMLContent.
      * ----
-     * @param {string} HTMLText
+     * @param {string} HTMLString
      * * Uma String que representa um ou mais elementos HTML. Representação de comentários também é suportado.
      * ----
      * @param {Function|{amount:number, position: PositionReference, handler: (source:ElementTools, done:Function)=>void}} options
      * * *(`Opcional`)*
-     * * Pode receber uma função callback que é executada antes do elemento gerado ser inserido. Espera a invocação do parâmetro **done( )** para executar a operação. Ou pode receber um Objeto que recebe as seguintes propriedades:
+     * * Pode receber uma função callback para cada HTMLContent ou pode receber um Objeto que recebe as seguintes propriedades:
      *
-     * > * **`handler:`** A função callback descrita anteriormente.
+     * > * **`handler:`** A função callback.
      *
      * > * **`amount:`** Um número que define a quantidade de elementos que serão gerados a partir da string.
      *
      * > * **`position:`** Uma referência que indique a posição em que o elemento gerado será inserido na lista de elementos filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência, indica que o novo elemento será inserido antes dele.
      */
-    AUX.prototype.appendHTML = function (HTMLText, options = {}) {
-        var err = __.err("dom.appendHTML");
-        err.to(HTMLText, "string")
+    AUX.prototype.appendHTML = function (HTMLString, options = {}) {
+        var err = __.err("AUX.appendHTML");
+        err.to(HTMLString, "string")
             .to(options, "function, object", false)
             .expectObj(
                 options,
@@ -552,28 +586,18 @@ var AUX = (function () {
             x.childList = [...root.children];
 
             for (let i = 0; i < options.amount; i++) {
-                x.htmlText = __.strHTML(HTMLText);
-
-                //Função done()
-                x.done = () => {
-                    //Obter o elemento filho referência para o insertBefore
-                    x.nodeRef = __.indexRef(options.position, x.childList);
-                    x.isDone = true; //Avisar que esta função foi executada
-                    root.insertBefore(x.htmlText, x.nodeRef);
-                };
+                x.htmlText = __.strHTML(HTMLString);
 
                 //Callback function
                 if (options.handler) {
-                    options.handler(2, x.done);
-                } else {
-                    x.done();
+                    options.handler(x.htmlText);
                 }
+                //Obter o elemento filho referência para o insertBefore
+                x.nodeRef = __.indexRef(options.position, x.childList);
+                x.isDone = true; //Avisar que esta função foi executada
+                root.insertBefore(x.htmlText, x.nodeRef);
             }
         }, this.elements);
-
-        if (!x.isDone) {
-            err.notDone(x.isDone);
-        }
 
         clear(x);
         err = null;
@@ -582,14 +606,14 @@ var AUX = (function () {
 
     ////////////////// .appendChilds ////////////////////////
     /**
-     * * Insere novos elementos filhos ao final da lista de nós filhos (ou em uma posição especificada em *`options.position`*) do primeiro elemento pai da lista de manipulação principal.
+     * * Insere novos elementos filhos ao final da lista de nós filhos (ou em uma posição especificada em *`options.position`*) do elemento.
      * * Nota: Se os elementos inseridos forem filhos de outros nós, estes então serão removidos des seus nós pai para serem inseridos no novo pai, já que o mesmo elemento não pode estar em dois lugares distintos na árvore DOM. Para obter resultado semelhante usar *`AUX.appendClones( )`*.
      * * Opcionalmente pode executar uma função *`callback`* para cada elemento filho obtido antes dos mesmos serem inseridos, esperando a execução da função *`done( )`* (obtida no segundo parâmetro desta função) para finalizar a operação.
      * ------
      * @param {ElementReference} selectors
      * * Deve receber os elementos que serão inseridos como filho, podendo obté-los através de uma string que represente um seletor CSS válido (ou múltiplos seletores separados por vírgula), um array de contento seletores ou os elementos, um nodeList ou HTMLCollection ou um HTMLElement.
      *-------
-     * @param {{handler: _CallbackFunction, position: PositionReference}|_CallbackFunction} options
+     * @param {{handler: HandlerFunction, position: PositionReference}|HandlerFunction} options
      *
      * *`(opcional)`*
      * * Pode receber uma função de retorno de chamada ou pode receber um Objeto que recebe as seguintes propriedades opcionais:
@@ -618,7 +642,7 @@ var AUX = (function () {
      * })
      */
     AUX.prototype.appendChilds = function (selectors, options = {}) {
-        let err = __.err(".appendChilds");
+        let err = __.err("AUX.appendChilds");
         err.to(selectors, t.ELREF)
             .isVoid(selectors)
             .to(options, "function, object", false)
@@ -634,7 +658,7 @@ var AUX = (function () {
 
         selectors = __.ex(selectors, err);
 
-        x.isDone = false; //Indica se a função done foi executada
+        
         x.root = this.elements[0];
         x.childList = [...x.root.children];
 
@@ -645,24 +669,21 @@ var AUX = (function () {
 
         // Para cada filho a ser inserido...
         selectors.forEach((child) => {
-            //Função done()
-            x.done = () => {
-                //Obter o elemento filho referência para o insertBefore
-                x.nodeRef = __.indexRef(options.position, x.childList);
-                x.isDone = true; //Avisar que esta função foi executada
-                this.elements[0].insertBefore(child, x.nodeRef);
-            };
-
+            
+            
             //Callback function
             if (options.handler) {
-                options.handler(2, x.done);
-            } else {
-                x.done();
+                options.handler(new AUXProperties({
+                    item: child,
+                    root: x.root,
+                    rootList: this.elements,
+                    itemList: selectors
+                }));
+                //Obter o elemento filho referência para o insertBefore
+                x.nodeRef = __.indexRef(options.position, x.childList);
+                this.elements[0].insertBefore(child, x.nodeRef);
             }
         });
-
-        //Lançar erro se done() não for executada
-        err.notDone(x.isDone, 2);
 
         clear(x);
         err = null;
@@ -679,7 +700,7 @@ var AUX = (function () {
      * >* Um seletor CSS que aponte para um nó filho (ou múltiplos seletores separardos por vírgula) para ser removido ou um array contendo os seletores.
      * >* O elemento ou array de elementos.
      * ----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * *`(opcional)`*
      * * Executa uma função para cada elemento removido.
      * ----
@@ -1620,7 +1641,7 @@ var AUX = (function () {
         return this;
     };
 
-    //////////// .removeEvent /////////////
+    //////////// .removeEvent ///////////// - TERMINADO
     /**
      * * Remove um ouvinte de evento previamente registrado e adicionado à *`pilha de espera de remoção`*.
      * > **`Nota:`** Ouvintes de eventos só são removíveis com este método se foram adicionados com *`AUX.on()`* ou *`AUX.events()`*, os mesmos só são removíveis com este método se estiverem na *`pilha de remoção`* previamente definidos nos parâmetros *`options.removeStack`* dos métodos de inserção de eventos.
@@ -1642,6 +1663,14 @@ var AUX = (function () {
      * .removeEvent("mouseenter", "mouseEnter")
      */
     AUX.prototype.removeEvent = function (type, handler, options = {}) {
+        __.err("AUX.removeEvent")
+            .to(type, "string")
+            .to(handler, "function")
+            .to(options, "object, boolean", false)
+            .expectObj(options, {
+                capture: "boolean",
+            })
+            .done();
         type = type.toLowerCase();
         var evt;
 
@@ -1687,6 +1716,7 @@ var AUX = (function () {
                 }
             }
         }, this.elements);
+        return this;
     };
 
     ///////////// .siblings ////////////////////
@@ -1903,8 +1933,4 @@ var AUX = (function () {
     return AUX;
 })();
 
-
-export default AUX
-
-
-
+export default AUX;
