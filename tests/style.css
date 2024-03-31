@@ -15,6 +15,16 @@ body, #super-parent {
     
 }
 
+.other {
+    border: 2px dashed green;
+    border-radius: 10px;
+    padding: 2em;
+    height: fit-content;
+    display: grid;
+    place-items:  center;
+    gap: 1em;
+}
+
 #btn {
     position: fixed;
     top: 1em;

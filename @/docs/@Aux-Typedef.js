@@ -1,23 +1,26 @@
 import"../internal/@interfaces.js"
 import { AUXProperties } from "../internal/@interfaces.js";
 
-/**
- * @typedef {Selector|ElementList} ElementReference
- */
+
 
 /**
  * @typedef {string} Selector Uma *String* que representa um seletor *CSS* válido que aponte para um ou mais elementos existentes no *DOM*.
  */
 
-// VALORES DA PROPRIEDADE SE ESTILO DISPLAY
+//////////// CSSDisplayValue ///////////////////////////
 /**
- * @typedef {"block" | "contents" | "flex" | "grid" | "inline" | "table" | "inline-flex" | "inline-block" | "flexbox" | "inline-flexbox" | "inline-table" | "list-item" | "none" | "run-in" | "flow-root" | "ruby" | "ruby-base" | "ruby-base-container" | "ruby-text" | "ruby-text-container" | "table-caption" | "table-cell" | "table-column" | "table-column-group" | "table-footer-group" | "table-header-group" | "table-row" | "table-row-group" | DefaultStyleValues} DisplayValue
+ * @typedef {"block" | "contents" | "flex" | "grid" | "inline" | "table" | "inline-flex" | "inline-block" | "flexbox" | "inline-flexbox" | "inline-table" | "list-item" | "none" | "run-in" | "flow-root" | "ruby" | "ruby-base" | "ruby-base-container" | "ruby-text" | "ruby-text-container" | "table-caption" | "table-cell" | "table-column" | "table-column-group" | "table-footer-group" | "table-header-group" | "table-row" | "table-row-group" | DefaultStyleValues} CSSDisplayValue
  */
 
 /**
  * @typedef {number|string|HTMLElement|null} PositionReference Uma referência de posição de um elemento HTML dentro de uma lista de elementos
  * 
- * @typedef {number|ElementList} elementListReference
+
+/////////////////// SELEÇÃO DE ELEMENTOS ////////////////////////////////
+/**
+ * @typedef {number | string | HTMLElement | Array<number|string|HTMLElement> | NodeList | HTMLAllCollection} ChildReference
+ * 
+ * @typedef {string | HTMLElement | Array<number|string|HTMLElement> | NodeList | HTMLAllCollection } ElementSelector
  */
 
 ////////////////////// UNIDADE DE MEDIDA CSS ///////////////////////
@@ -44,12 +47,14 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * @typedef {"linear-gradient()" | "radial-gradient()" | "color()" | "rgb()" | "rgba()" | "url()"} StyleBackgroundFunc
  */
 
-//attributesObject
+/////////// AttributesObject //////////////
 /**
+ * @typedef {"button" | "checkbox" | "color" | "date" | "datetime"  | "datetime-local" | "email"  | "file" | "hidden" | "image" | "month" | "number" | "password" | "radio" | "range" | "reset" | "search" | "submit" | "tel" | "text" | "time" | "url" | "week"} TypeAttrValues
+ * 
  * @typedef {{
  * id: string,
  * class: string,
- * type: string,
+ * type: TypeAttrValues,
  * name: string,
  * placeholder: string,
  * required: boolean,
@@ -60,9 +65,9 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * lang: string,
  * style: string,
  * href: string,
- * target: string,
+ * target:  "_blank" | "_parent" | "_self" | "_top",
  * src: string,
- * label:string,
+ * label: string,
  * action: string,
  * alt: string,
  * title: string,
@@ -70,7 +75,7 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * autocomplete: string,
  * content: string,
  * colspan: string,
- * method: string,
+ * method: "dialog" | "get" | "post",
  * max: string | number,
  * maxlength: string | number,
  * open: boolean,
@@ -148,9 +153,10 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * usemap: string,
  * wrap: string
  * width: string,
- * }} attributesObject Um objeto de definição de atributos de elementos HTML
+ * }} AttributesObject Um objeto de definição de atributos de elementos HTML
  */
 
+///////////////// StyleProperties /////////////
 /**
  * @typedef {{
  * fontFamily: string,
@@ -275,23 +281,28 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * @typedef {Array<Selector|HTMLElement>|NodeList|HTMLCollection} ElementList Uma lista de elementos HTML e/ou Seletores válidos. Pode ser um Array, um Object, um NodeList ou um HTMLCollection.
  */
 
+///////// HANLDER FUNCTIONS ////////////
+
 /**
  * @callback HandlerFunction
  * @param {AUXProperties} source
+ * 
+ * @callback EventHandlerFunction
+ * @param {AUXProperties} source
+ * @param {PointerEvent | MouseEvent | KeyboardEvent} event
  */
 /////////////// ARGUMENTOS DE CONTROLE ////////////////////
 /**
  * @typedef {"next" | "prev" | "all-next" | "all-prev" | "all" | 1 | 2 | 3 | 4 | 5 | -1 | -2 | -3 | -4 | -5 } SiblingKeys Argumentos chave de seleção de elementos próximos (irmãos) de um elemento alvo principal.
  */
 
-/////////// INTERFACE ELEMENT TOOLS /////////////////////////
 
+
+///////////// INTERFACE FORMS //////////
 /**
- * @typedef {object} ElementTools Object de fun
- * @property {HTMLElement} item O elemento HTML alvo da operação atual.
- * @property {number} i O index do elemento HTML atual (item) na lista de elementos alvos da operação atual (elementos fornecido em **dom()**).
- * @property {GetterProperties} get Um Objeto que provém de propriedades somente leitura que fornecem informações sobre a operação atual e o elemento alvo.
- * @property {DOMDefinerMethods} def Um Objeto que provém métodos que podem ser aplicados sobre o elemento alvo da operação atual.
+ * @callback FormHandlerFunction
+ * @param {object} form
+ * @param {{form: HTMLElement, formList: Array<HTMLElement>}} details
  */
 
 
@@ -301,7 +312,7 @@ import { AUXProperties } from "../internal/@interfaces.js";
  *
  * 
  * @typedef {{
- * click: Function, load:Function, unload: Function, submit: Function, reset: Function,blur: Function, change: Function, dblClick: Function, focus: Function, mouseDown: Function,mouseUp: Function, mouseMove: Function, mouseOut: Function, mouseOver: Function, keyDown: Function, keyPress: Function, keyUp: Function, mouseLeave: Function, mouseEnter: Function, animationCancel: Function, animationEnd: Function, animationIteration: Function, animationStart: Function, auxClick: Function, beforeInput: Function, 
+ * click: EventHandlerFunction, load:EventHandlerFunction, unload: EventHandlerFunction, submit: EventHandlerFunction, reset: EventHandlerFunction,blur: EventHandlerFunction, change: EventHandlerFunction, dblClick: EventHandlerFunction, focus: EventHandlerFunction, mouseDown: EventHandlerFunction,mouseUp: Function, mouseMove: Function, mouseOut: Function, mouseOver: Function, keyDown: Function, keyPress: EventHandlerFunction, keyUp: EventHandlerFunction, mouseLeave: EventHandlerFunction, mouseEnter: EventHandlerFunction, animationCancel: EventHandlerFunction, animationEnd: EventHandlerFunction, animationIteration: EventHandlerFunction, animationStart: EventHandlerFunction, auxClick: EventHandlerFunction, beforeInput: EventHandlerFunction, 
  * }} EventListeners
  * 
  * 
@@ -310,42 +321,4 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * @property {boolean} [once] - Um valor booleano que indica que os ouvintes devem ser invocados no máximo uma vez após ser adicionado.
  * @property {boolean} [passive] - Um valor booleano que, se true, indica que a função/método especificada para o ouvinte nunca chamará *`preventDefault()`*.
  * @property {AbortSignal} [signal] - Um *`AbortSignal`*. O souvintes serão removidos quando o método *`AbortSignal`* do objeto fornecido *`abort()`* for chamado.
- */
-
-
-//////////// INTERFACE GETTER PROPERTIES ///////////////////////
-/**
- * @typedef {object} GetterProperties
- * @property {HTMLElement} item O elemento HTML alvo da operação atual.
- * @property {number} index O index do elemento HTML atual (item) na lista de elementos em que ele pertence. Não confundir com a propriedade "i" que fornece o index do elemento atual na operação, ou seja o index dos elementos fornecidos em **dom()**. Se a operação estiver tratando os filhos dos elementos fornecidos a propriedade index fornecerá o índice do filho do elemento raiz
- * @property {HTMLElement} root Forcene o elemento raiz (pai) se o elemento tratado (item) for fuilho deste ou sua origem for este.
- * @property {Array<HTMLElement>} rootList Fornece um Array contendo todos os elementos raiz referente ao item atual. Se o item atual for um elemento raiz então o valor é null
- * @property {Array<HTMLElement>} itemList Fornece um Array contento todos os elementos alvos da operação atual (item)
- * @property {HTMLElement} parent O elemento pai do item atual.
- * @property {string} id O valor do atributo id do item atual.
- * @property {Array<string>} classList Lista de classes do item atual.
- * @property {boolean} visible Um valor boolean que indica se o item está visível ou não.
- * @property {HTMLElement|null} prev Fornece o elemento anterior ao item atual na lista de elementos em que ele pertence.
- * @property {HTMLElement|null} next Fornece o elemento após o item atual na lista de elementos em que ele pertence.
- * @property {HTMLElement|null} nextSibling Fornece o elemento irmão sucessor ao item atual.
- * @property {HTMLElement|null} prevSibling Fornece o elemento irmão antecessor ao item atual.
- * @property {string} tagName O nome de tag do item atual.
- * @property {object} attrs Um objeto literal contendo as propriedades e valores presente no item atual.
- */
-
-///////////// INTERFACE DOM DEFINER METHODS ///////////////////////
-
-/**
- * @typedef {object} DOMDefinerMethods
- * @property {(attributesObj:object)=>void} attrs Define as propriedades do item. Se uma propriedade definida já existir no item o seu valor é sobrescrito.
- * 
- * ------
- * * **attributesObj** - Um object cujo as propriedades definem um atributo e o valor.
- * 
- * @property {(txt: string)=>void} text Define o contéudo de texto do item. Se um conteúdo de texto já existir no item então este é totalmente sobrescrito.
- * 
- * ----
- * * **txt** - Uma string que representa o contéudo de texto.
- * 
- * @property {} 
  */

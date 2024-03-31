@@ -1,12 +1,21 @@
 import __ from "../@/internal/@utils.js";
-import {AUXProperties} from "../@/internal/@interfaces.js"
-import("../@/docs/@Aux-Typedef.js");
+import { AUXProperties as Res } from "../@/internal/@interfaces.js";
+
 "use strict";
 /**
  * @typedef {import("../@/docs/@Aux-Typedef.js").HandlerFunction} HandlerFunction
+ * @typedef {import("../@/docs/@Aux-Typedef.js").EventHandlerFunction} EventHandlerFunction
  * @typedef {import("../@/docs/@Aux-Typedef.js").CSSUnit} CSSUnit
  * @typedef {import("../@/docs/@Aux-Typedef.js").StyleProperties} StyleProperties
- * 
+ * @typedef {import("../@/docs/@Aux-Typedef.js").ChildReference} ChildReference
+ * @typedef {import("../@/docs/@Aux-Typedef.js").ElementSelector} ElementSelector
+ * @typedef {import("../@/docs/@Aux-Typedef.js").AttributesObject} AttributesObject
+ * @typedef {import("../@/docs/@Aux-Typedef.js").CSSDisplayValue} CSSDisplayValue
+ * @typedef {import("../@/docs/@Aux-Typedef.js").FormHandlerFunction} FormHandlerFunction
+ * @typedef {import("../@/docs/@Aux-Typedef.js").EventListeners} EventListeners
+ * @typedef {import("../@/docs/@Aux-Typedef.js").EventOptions} EventOptions
+ * @typedef {import("../@/docs/@Aux-Typedef.js").EventType} EventType
+ * @typedef {import("../@/docs/@Aux-Typedef.js").SiblingKeys} SiblingKeys
  */
 
 function dom(elements) {
@@ -18,19 +27,12 @@ function dom(elements) {
 
     dom.toggleCSS = function (selector, styleProps) {};
 
-
-    
-
-    
-
     dom.toggleChilds = function (childsA, childsB) {};
     dom.toggle = function (elementB) {};
     dom.replace = function (newElement) {};
     dom.replaceChilds = function (newChilds, oldChilds) {};
     dom.click = function () {};
     dom.focus = function (options) {};
-
-  
 
     dom.toView = function () {};
 
@@ -41,7 +43,6 @@ function dom(elements) {
     dom.removeVar = function (varName) {};
     dom.toggleVar = function (varNameA, varNameB) {};
     dom.mediaQuery = function (media, styleProps) {};
-
 }
 
 var AUX = (function () {
@@ -192,9 +193,18 @@ var AUX = (function () {
          */
         this.insert = {
             /**
+             * @typedef {object} TableOptions
+             * @property {HandlerFunction} handler Executa a função para cada resultado obtido.
+             * @property {number} rows Um número que indique a quantidade de linhas que a tebela deve possuir.
+             * @property {number} cols Um número que indique a quantidade de colunas que a tebela deve possuir.
+             * @property {PositionReference} position
+             * @property {number} amount
+            */
+            
+            /**
              * * Cria uma tabela genérica sem estilos.
              *
-             * @param {optionsObject} options
+             * @param {TableOptions | HandlerFunction} options
              */
             table(options = {}) {
                 options = {
@@ -248,6 +258,71 @@ var AUX = (function () {
                 clear(x);
                 return thisObj.insert;
             },
+
+            /**
+             * * Cria formulários genéricos e os inserem no elemento.
+             * * Opcionalmente executa uma função *`callback`* para cada formulário criado onde se pode polir melhor a estrutura base.
+             * ------
+             * @param {object} inputTypes
+             * * Um objeto de propriedades que definem o label e o tipo dos campos *`input`*. O nome dado à propriedade deve ser um título *`label`* enquanto seu valor deve ser o tipo do input.
+             * -----
+             * @param {{amount: number, position: PositionReference, handler: HandlerFunction} | HandlerFunction} options
+             */
+            form(inputTypes, options = {}) {
+                options = {
+                    position: options.position ?? null,
+                    handler: __.type(options) == "function" ? options : options.handler,
+                    amount: options.amount ?? 1,
+                };
+                let x = {}
+
+                to((root) => {
+                    x.childList = [...root.children];
+                    x.nodeRef = __.indexRef(options.position, x.childList);
+                    for (let i = 0; i < options.amount; i++) {
+                        x.form = __.strHTML(
+                            `
+                        <form action="" class="aux-form">
+                            <h1 class="form-title">Title Here</h1>
+                            <p class="form-description">Lorem ipsum, dolor sit amet consectetur adipisicing elit.</p>
+                            <div class="input-container">
+                                ${Object.keys(inputTypes)
+                                    .map((name) => {
+                                        return `
+                                    <div class="${name}-container">
+                                        <label for="${name}">${__.capitalize(
+                                            name
+                                        )}</label>
+                                        <input type="${
+                                            inputTypes[name]
+                                        }" id="${name}" name="${name}" required>
+                                        <p class="warn-msg"><!-- Mostrar mensagem de aviso --></p>
+                                    </div>`;
+                                    })
+                                    .join("")}
+                                    
+                                
+                                <div class="checkbox-container">
+                                    <input type="checkbox" name="remember-pass" id="remember-pass">
+                                    <label for="remember-pass">Remember password?</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="submit-btn">Submit</button>
+                        </form>
+                        `
+                        ).querySelector(".aux-form");
+
+                        root.insertBefore(x.form, x.nodeRef);
+
+                        if (options.handler) {
+                            options.handler(x.form);
+                        }
+                    }
+                }, this.elements);
+
+                x = null
+                return this;
+            }
         };
 
         /** * Fornece métodos que adiciona ou remove elementos da lista de manipulação principal. */
@@ -512,7 +587,7 @@ var AUX = (function () {
      * * Define os atributos do elemento.
      * * Se um elemento já possuir um atributo especificado em *`attributes`* o valor deste será sobrescrito. Se um atributo especificado em *`attributes`* receber um valor *`false`* ou *`null`* este atributo será removido do elemento alvo.
      * ----
-     * @param {attributesObject} attributes
+     * @param {AttributesObject} attributes
      * * Um objeto que define os atributos e seus valores para os elemetos alvos. Deve receber propriedades cujo a chave seja referente a algum atributo HTML e valor é o valor deste atributo.
      * ----
      * @example
@@ -550,15 +625,24 @@ var AUX = (function () {
      * @param {string} HTMLString
      * * Uma String que representa um ou mais elementos HTML. Representação de comentários também é suportado.
      * ----
-     * @param {Function|{amount:number, position: PositionReference, handler: (source:ElementTools, done:Function)=>void}} options
+     * @param {HandlerFunction|{amount:number, position: PositionReference, handler: HandlerFunction}} options
      * * *(`Opcional`)*
      * * Pode receber uma função callback para cada HTMLContent ou pode receber um Objeto que recebe as seguintes propriedades:
      *
-     * > * **`handler:`** A função callback.
+     * > * **`handler:`** A função callback. Recebe um parâmetro que deve ser desestruturado.
      *
      * > * **`amount:`** Um número que define a quantidade de elementos que serão gerados a partir da string.
      *
      * > * **`position:`** Uma referência que indique a posição em que o elemento gerado será inserido na lista de elementos filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência, indica que o novo elemento será inserido antes dele.
+     * ---
+     * @example
+     * .appendHTML("<button>OK</button>")
+     * .appendHTML("<button>OK</button>", function({item, get, is}{...}))
+     * .appendHTML("<button>OK</button>", {amount: 2, position: 0})
+     * .appendHTML("<button>OK</button>", {
+     *      position: 0,
+     *      handler({item, get, is}){...}
+     * })
      */
     AUX.prototype.appendHTML = function (HTMLString, options = {}) {
         var err = __.err("AUX.appendHTML");
@@ -575,7 +659,6 @@ var AUX = (function () {
             )
             .done();
 
-        x.isDone = false;
         options = {
             handler: __.type(options) == "function" ? options : options.handler,
             amount: options.amount ?? 1,
@@ -587,14 +670,26 @@ var AUX = (function () {
 
             for (let i = 0; i < options.amount; i++) {
                 x.htmlText = __.strHTML(HTMLString);
+                options.fragment =
+                    x.htmlText.children.length === 1
+                        ? x.htmlText.children[0]
+                        : x.htmlText;
 
                 //Callback function
                 if (options.handler) {
-                    options.handler(x.htmlText);
+                    options.handler(
+                        new Res({
+                            i: i,
+                            item: options.fragment,
+                            root: root,
+                            rootList: this.elements,
+                            itemList: [...x.htmlText.children],
+                        })
+                    );
                 }
+
                 //Obter o elemento filho referência para o insertBefore
                 x.nodeRef = __.indexRef(options.position, x.childList);
-                x.isDone = true; //Avisar que esta função foi executada
                 root.insertBefore(x.htmlText, x.nodeRef);
             }
         }, this.elements);
@@ -613,7 +708,7 @@ var AUX = (function () {
      * @param {ElementReference} selectors
      * * Deve receber os elementos que serão inseridos como filho, podendo obté-los através de uma string que represente um seletor CSS válido (ou múltiplos seletores separados por vírgula), um array de contento seletores ou os elementos, um nodeList ou HTMLCollection ou um HTMLElement.
      *-------
-     * @param {{handler: HandlerFunction, position: PositionReference}|HandlerFunction} options
+     * @param {{handler: HandlerFunction, position: PositionReference} | HandlerFunction} options
      *
      * *`(opcional)`*
      * * Pode receber uma função de retorno de chamada ou pode receber um Objeto que recebe as seguintes propriedades opcionais:
@@ -658,7 +753,6 @@ var AUX = (function () {
 
         selectors = __.ex(selectors, err);
 
-        
         x.root = this.elements[0];
         x.childList = [...x.root.children];
 
@@ -669,16 +763,16 @@ var AUX = (function () {
 
         // Para cada filho a ser inserido...
         selectors.forEach((child) => {
-            
-            
             //Callback function
             if (options.handler) {
-                options.handler(new AUXProperties({
-                    item: child,
-                    root: x.root,
-                    rootList: this.elements,
-                    itemList: selectors
-                }));
+                options.handler(
+                    new Res({
+                        item: child,
+                        root: x.root,
+                        rootList: this.elements,
+                        itemList: selectors,
+                    })
+                );
                 //Obter o elemento filho referência para o insertBefore
                 x.nodeRef = __.indexRef(options.position, x.childList);
                 this.elements[0].insertBefore(child, x.nodeRef);
@@ -692,7 +786,7 @@ var AUX = (function () {
 
     ///////// .removeChilds //////////
     /**
-     * * Remove um ou mais elementos filhos de cada elemento pai da lista de manipulação. Opcionalmente pode executar uma função *`callback`* para cada filho removido.
+     * * Remove um ou mais elementos filhos do elemento *`alvo`*. Opcionalmente pode executar uma função *`callback`* para cada filho removido.
      * ----
      * @param {PositionReference} childReference
      * * Uma referência de quais filhos da lista de nós filhos remover. Podendo ser:
@@ -704,22 +798,43 @@ var AUX = (function () {
      * *`(opcional)`*
      * * Executa uma função para cada elemento removido.
      * ----
+     * @example
+     * .removeChilds(".div") => Remove filhos pelo seletor CSS.
+     * .removeChilds(1) => Remove filho pelo índice.
+     * .removeChilds([1,2,6]) => Remove múltiplos filhos pelos índices.
+     * .removeChilds(".div", function({item, get, is}){...}) => Executa uma função para o filho removido.
      */
     AUX.prototype.removeChilds = function (childReference, handler = Function) {
+        __.err("AUX.removeChilds")
+            .to(childReference, "number, string, array, HTMLElement")
+            .to(handler, "function", false)
+            .done();
+        let e = {
+            list: null,
+            removed: null,
+        };
         to((root) => {
-            x.list = __.getElementsOfList(childReference, [...root.children]);
+            e.list = __.getElementsOfList(childReference, [...root.children]);
 
-            for (let i = 0; i < x.list.length; i++) {
+            for (let i = 0; i < e.list.length; i++) {
                 //Remove e armazena o nó removido
-                x.removed = root.removeChild(x.list[i]);
+                e.removed = root.removeChild(e.list[i]);
 
                 if (handler !== Function) {
-                    handler(x.removed);
+                    handler(
+                        new Res({
+                            item: e.removed,
+                            i: i,
+                            itemList: e.list,
+                            root: root,
+                            rootList: this.elements,
+                        })
+                    );
                 }
             }
         }, this.elements);
 
-        clear(x);
+        e = null;
         return this;
     };
 
@@ -729,16 +844,16 @@ var AUX = (function () {
      * * Se mais de um filhos forem passados em *`oldChilds`* e a mesma quantidade for passada em *`newChilds`* o filho antigo será removido e em seu lugar será inserido o novo filho correspondente da lista de novos filhos. Os novos filhos que não corresponderem com algum filho antigo será apenas inserido ao final da lista de nós filhos. Mas se faltar, o filho antigo não terá com quem ser substituído e será ignorado da operação.
      * * Opcionalmente pode executar uma função *`callback`* para cada filho que foi substituído com êxito.
      * ----
-     * @param {elementListReference} oldChilds
+     * @param {ChildReference} oldChilds
      * * Uma referência de quais filhos existentes na lista de nós filhos serão substituídos. Podendo ser:
      * >* A posição (índice) do filho ou um array contendo as posições para múltiplas substituições.
      * >* Um seletor CSS que aponte para um nó filho (ou múltiplos seletores separardos por vírgula) ou um array contendo os seletores.
      * >* O próprio elemento como referência ou um array de elementos.
      * -------
-     * @param {ElementReference} newChilds
+     * @param {ElementSelector} newChilds
      * * Deve receber os elementos que serão inseridos como novos filhos, podendo obté-los através de uma string que represente um seletor CSS válido (ou múltiplos seletores separados por vírgula), um array de contento seletores ou elementos, um nodeList ou HTMLCollection ou o próprio elemento como referência.
      * ----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * *`(opcional)`*
      * * Executa uma função para cada filho que foi substituído (removido) com êxito.
      *
@@ -749,16 +864,14 @@ var AUX = (function () {
      *
      * .replaceChilds(".old-childs", ".new-childs")
      *
-     * .replaceChilds(1, "#foo", function({item, get, def, is}){
-     *      // Seu código...
-     * })
+     * .replaceChilds(1, "#foo", function({item, get, is}){...})
      */
     AUX.prototype.replaceChilds = function (
         oldChilds,
         newChilds,
         handler = Function
     ) {
-        let err = __.err(".replaceChilds");
+        let err = __.err("AUX.replaceChilds");
         err.to(oldChilds, t.ELREF + ", number")
             .isVoid(oldChilds)
             .to(newChilds, t.ELREF)
@@ -766,6 +879,7 @@ var AUX = (function () {
             .to(handler, "function", false)
             .done();
 
+        let x = {};
         x.root = this.elements[0];
 
         oldChilds = __.getElementsOfList(oldChilds, [...x.root.children]);
@@ -776,20 +890,80 @@ var AUX = (function () {
             x.new = newChilds[i] || null;
 
             if (x.old) {
-                x.root.replaceChild(x.new, x.old);
-
                 //Exeutar função callback
                 if (handler !== Function) {
-                    handler(x.old);
+                    handler(
+                        new Res({
+                            i: i,
+                            item: x.old,
+                            itemList: oldChilds,
+                            root: x.root,
+                            rootList: this.elements,
+                        })
+                    );
                 }
+                x.root.replaceChild(x.new, x.old);
             } else {
                 //Adicionar filho que sobrar ao final da lista de nós filhos
                 x.root.appendChild(x.new);
             }
         }
+        (err = null), (x = null);
+        return this;
+    };
 
-        clear(x);
-        err = null;
+    ////////// .exchangeChilds //////////
+    /**
+     * * Troca os elementos filhos por outros elementos passados. Os elementos filhos que foram substituídos tomam os lugares deixados pelos substitutos, fazendo uma troca equivalente sem deixar espaços vazios.
+     * > * **Nota:** O elemento substituto obrigatoriamente precisa ter um pai para a troca ser possível. Caso um elemento sem pai seha passado este será ignorado e nada acontecerá.
+     * > * **Nota:** A quantidade de elementos a serem trocados precisam ser iguais, caso sobre elementos para a troca este será ignorado. Se, por exemplo, três elementos filhos foram selecionados para serem trocados, logo três elementos substitutos devem se passodos.
+     * ------
+     * @param {ChildReference} childs
+     * * Uma referência ao elementos filhos que serão trocados. Podendo ser:
+     * >* A posição (índice) do filho ou um array contendo as posições para múltiplas trocas.
+     * >* Um seletor CSS que aponte para um nó filho (ou múltiplos seletores separardos por vírgula) ou um array contendo os seletores.
+     * >* O próprio elemento como referência ou um array de elementos.
+     * @param {ElementSelector} substitutes
+     * * Uma referência aos elementos substitutos.
+     * ----
+     * @example
+     * .exchangeChilds(2, ".other")
+     * .exchangeChilds([0, 2], ".other1, .other2")
+     * .exchangeChilds(".child2", ".other")
+     */
+    AUX.prototype.exchangeChilds = function (childs, substitutes) {
+        let err = __.err("AUX.exchangeChilds");
+        err.to(childs, t.ELREF + ", number")
+            .to(substitutes, t.ELREF)
+            .done();
+        let x = {};
+        x.root = this.elements[0];
+
+        childs = __.getElementsOfList(childs, [...x.root.children]);
+        substitutes = __.ex(substitutes, err, 2);
+
+        for (let i = 0; i < substitutes.length; i++) {
+            x.child = childs[i] || null;
+            x.subs = substitutes[i] || null;
+            x.subsParent = x.subs.parentElement;
+
+            if (x.child && x.subsParent) {
+                x.mask = {
+                    child: document.createComment("aux-mask"),
+                    subs: document.createComment("aux-mask"),
+                };
+
+                //Substituir elementos apontados por comentário para marcar posição.
+                x.root.replaceChild(x.mask.child, x.child);
+                x.subsParent.replaceChild(x.mask.subs, x.subs);
+
+                // Substituir comentário por elemento
+                x.root.replaceChild(x.subs, x.mask.child);
+                x.subsParent.replaceChild(x.child, x.mask.subs);
+            }
+        }
+
+        (err = null), (x = null);
         return this;
     };
 
@@ -802,7 +976,7 @@ var AUX = (function () {
      * @param {{}} options
      */
     AUX.prototype.appendClones = function (selectors, options = {}) {
-        let err = __.err(".appendClones");
+        let err = __.err("AUX.appendClones");
         err.to(selectors, t.ELREF)
             .isVoid(selectors)
             .to(options, "function, object", false)
@@ -850,16 +1024,16 @@ var AUX = (function () {
 
     /////// .createChilds /////////////////
     /**
-     * * Cria um ou mais elementos filhos para cada elemento pai da lista de manipulação e executa uma função *`callback`* para cada resultado onde se pode adicionar propriedades e conteúdos aos elementos criados.
+     * * Cria um ou mais elementos filhos para o elemento pai e executa uma função *`callback`* para cada resultado onde se pode adicionar propriedades e conteúdos aos elementos criados.
      * * Só é possível criar um tipo de elemento especificado pelo *`tagName`*, sendo possível apenas gerar múltiplas cópias desta mesma tag especificando a quantidade em *`options.amount`*.
      * ----
-     * @param {string} tagName
+     * @param {keyof HTMLElementTagNameMap} tagName
      * * Uma nome de tag.
      * -----
-     * @param {Function} handler
+     * @param {HandlerFunction} handler
      * * Uma função para cada filho criado. Recebe um parâmetro que deve ser desestrututado para melhor obtenção das propriedades de manipulação.
      * ----
-     * @param {{amount:number,options:PositionReference}} options
+     * @param {{amount:number, options:PositionReference}} options
      * *`(opcional)`*
      * * Um objeto que deve receber as seguintes opções de propriedades:
      *
@@ -869,18 +1043,16 @@ var AUX = (function () {
      * -----
      * @example
      * // Cria um filho input e o insere o final da lista de nós filhos.
-     * .createChilds("input", function({item, i, get, def, is}){
-     *      // Se código
-     * })
+     * .createChilds("input", function({item, get, is}){...})
      *
      * // Cria 3 filhos input e os insere na posição 0 (início) da lista de nós filhos.
-     * .createChilds("input", function({item, i, get, def, is}){
-     *      // Se código
+     * .createChilds("input", function({item, get, is}){
+     *      //...
      * }, {amount: 3, position: 0})
      *
      */
     AUX.prototype.createChilds = function (tagName, handler, options = {}) {
-        __.err(".createChilds")
+        __.err("AUX.createChilds")
             .to(tagName, "string")
             .to(handler, "function")
             .to(options, "object", false)
@@ -892,34 +1064,53 @@ var AUX = (function () {
             position: options.position ?? null,
         };
 
+        let x = {};
+
         to((root) => {
             x.childList = [...root.children];
             for (let i = 0; i < options.amount; i++) {
                 x.created = document.createElement(tagName);
                 //Obter o elemento filho referência para o insertBefore
                 x.nodeRef = __.indexRef(options.position, x.childList);
-                handler(x.created);
+                handler(
+                    new Res({
+                        item: x.created,
+                        i: i,
+                        itemList: [x.created],
+                        root: root,
+                        rootList: this.elements,
+                    })
+                );
                 root.insertBefore(x.created, x.nodeRef);
             }
         }, this.elements);
 
-        clear(x);
+        x = null;
         return this;
     };
 
     //////////////// .for ////////////////////
     /**
-     * * Percorre os elementos da lista manipulação e executa uma função de chamada de retorno para cada resultado.
+     * * Percorre os elementos da lista manipulação e executa uma função de retorno de chamada para cada resultado.
      * -----
-     * @param {Function} handler
+     * @param {HandlerFunction} handler
      * * Uma `callback function`.
      * -----
+     * @example
+     *
+     * .for(function({item, get, is}){...})
      */
     AUX.prototype.for = function (handler) {
+        __.err("AUX.for").to(handler, "function").done();
         for (let i = 0; i < this.elements.length; i++) {
-            handler(this.elements[i]);
+            handler(
+                new Res({
+                    i: i,
+                    item: this.elements[i],
+                    itemList: this.elements,
+                })
+            );
         }
-
         return this;
     };
 
@@ -934,9 +1125,14 @@ var AUX = (function () {
      * @param {string|Array<string>|null} namesB
      * *`(opcional)`*
      * * Uma *`string`* que representa um nome de classe ou múltiplos nomes de classe separados por vírgula. Ou um *`array`* contento os nomes de classe ou *`null`*.
+     * ----
+     * @example
+     * .toggleClass("show")
+     * .toggleClass("show", "hidden")
+     * .toggleClass(["show", "foo"], "hidden")
      */
     AUX.prototype.toggleClass = function (namesA, namesB = null) {
-        __.err(".toggleClass")
+        __.err("AUX.toggleClass")
             .to(namesA, t.CLASSLIST)
             .isVoid(namesA)
             .to(namesB, "string, array, object, null", false)
@@ -945,11 +1141,11 @@ var AUX = (function () {
 
         namesA = __.arr(namesA, true);
         namesB = namesB === null ? null : __.arr(namesB, true);
-
+        let has
         to((root) => {
             //Função temporária
             //Verifica se o nome de classe ou um dos nomes de classe passados já existem no elemento alvo e retorna true.
-            x.has = (names) => {
+            has = (names) => {
                 for (let name of names) {
                     if (root.classList.contains(name)) {
                         return true;
@@ -959,21 +1155,21 @@ var AUX = (function () {
             };
 
             if (namesB === null) {
-                if (x.has(namesA)) {
+                if (has(namesA)) {
                     root.classList.remove(...namesA);
                 } else {
                     root.classList.add(...namesA);
                 }
             } else {
-                if (x.has(namesA) && !x.has(namesB)) {
+                if (has(namesA) && !has(namesB)) {
                     root.classList.remove(...namesA);
                     root.classList.add(...namesB);
-                } else if (x.has(namesB) && !x.has(namesA)) {
+                } else if (has(namesB) && !has(namesA)) {
                     root.classList.remove(...namesB);
                     root.classList.add(...namesA);
                 } else if (
-                    (x.has(namesA) && x.has(namesA)) ||
-                    (!x.has(namesA) && !x.has(namesA))
+                    (has(namesA) && has(namesA)) ||
+                    (!has(namesA) && !has(namesA))
                 ) {
                     root.classList.remove(...namesA);
                     root.classList.add(...namesB);
@@ -981,13 +1177,13 @@ var AUX = (function () {
             }
         }, this.elements);
 
-        clear(x);
+        has = null
         return this;
     };
 
     /////////// .replaceClass ///////////////////
     /**
-     * * Remove os nomes de classe passados em *`oldNames`* (nomes de classe existentes no elemento alvo) e adiciona os nomes de classe passados em *`newNames`*.
+     * * Remove os nomes de classe passados em *`oldNames`* (nomes de classe existentes do elemento alvo) e adiciona os nomes de classe passados em *`newNames`*.
      *----
      * @param {string|Array<string>} oldNames
      * * Um ou mais nomes de classe já existentes. Uma *`string`* que representa um nome de classe ou múltiplos nomes de classe separados por vírgula. Ou um *`array`* contento os nomes de classe.
@@ -996,9 +1192,8 @@ var AUX = (function () {
      * * Um ou mais nomes de classe para serem adicionados. Uma *`string`* que representa um nome de classe ou múltiplos nomes de classe separados por vírgula. Ou um *`array`* contento os nomes de classe.
      * ----
      */
-
     AUX.prototype.replaceClass = function (oldNames, newNames) {
-        __.err(".replaceClass")
+        __.err("AUX.replaceClass")
             .to(oldNames, t.CLASSLIST)
             .isVoid(oldNames)
             .to(newNames, t.CLASSLIST)
@@ -1025,7 +1220,7 @@ var AUX = (function () {
      * -----
      */
     AUX.prototype.removeClass = function (names) {
-        __.err(".removeClass").to(names, t.CLASSLIST).isVoid(names).done();
+        __.err("AUX.removeClass").to(names, t.CLASSLIST).isVoid(names).done();
 
         to((root) => {
             root.classList.remove(...__.arr(names, true));
@@ -1036,23 +1231,27 @@ var AUX = (function () {
 
     ////////// .childs /////////////////
     /**
-     * * Percorre os elementos que são diretamente filhos dos elementos pai e executa uma função de chamada de retorno para cada resultado.
+     * * Percorre os elementos que são diretamente filhos do elemento pai e executa uma função de retorno de chamada para cada resultado.
      * -----
-     * @param {Function} handler
+     * @param {HandlerFunction} handler
      * * Uma função callback para cada elemento filho iterado.
      * * Recebe um parâmetro que deve ser desestruturado para obter de forma mais limpa as propriedades de manipulação desejadas.
      * -----
      * @example
-     * .forChilds(({item, get, def, is})=>{
-     *      // Se código...
-     * })
+     * .forChilds(({item, get, i, is})=>{...})
      */
     AUX.prototype.childs = function (handler) {
-        __.err(".childs").to(handler, "function").done();
+        __.err("AUX.childs").to(handler, "function").done();
 
         to((root) => {
             for (let i = 0; i < root.children.length; i++) {
-                handler(root.children[i]);
+                handler(new Res({
+                    i: i,
+                    item: root.children[i],
+                    itemList: [...root.children],
+                    root: root,
+                    rootList: this.elements
+                }));
             }
         }, this.elements);
 
@@ -1066,29 +1265,33 @@ var AUX = (function () {
      * @param {string|Array<string>} childSelector
      * * Um seletor CSS válido que aponte para algum elemento filho na árvore de descendentes ou múltiplos seletores separados por vírgula. Um *`Array`* ou *`Object`* contendo seletores.
      * -----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Executa uma função para cada elemento filho obtido.
      * -----
      * @example
      * //Buscar por todos os elementos div class="box" existentes dentro do nó pai.
-     * .search("div.box", function({item, get, def, is}){
-     *      // Seu código
-     * })
+     * .search("div.box", function({item, get, is}){...})
      */
     AUX.prototype.search = function (childSelector, handler) {
-        __.err(".search")
+        __.err("AUX.search")
             .to(childSelector, "string, array, object")
             .to(handler, "function")
             .done();
-
+        let res
         to((root) => {
-            x.res = root.querySelectorAll(childSelector);
-            for (let i = 0; i < x.res.length; i++) {
-                handler(x.res[i]);
+            res = [...root.querySelectorAll(childSelector)]
+            for (let i = 0; i < res.length; i++) {
+                handler(new Res({
+                    i: i,
+                    item: res[i],
+                    itemList: res,
+                    root: root,
+                    rootList: this.elements
+                }));
             }
         }, this.elements);
 
-        clear(x);
+        res = null
         return this;
     };
 
@@ -1098,11 +1301,11 @@ var AUX = (function () {
      * * Se nenhum argumento for passado nos dois parâmetros a alternância padrão será entre *`"none"`* e *`block`*. Podendo substituir o valor padrão *`block`* por outro valor desejado.
      * * Se um valor for passado no segundo parâmetro a alternância ocorrerá entre os dois valores passados nos dois parâmetros.
      * ----
-     * @param {DisplayValue} valueA
+     * @param {CSSDisplayValue} valueA
      * *`(opcional)`*
      * * Uma string que represente um valor válido da propriedade *`display`*. Este valor substitui o valor padrão *`block`*.
      * ------
-     * @param {DisplayValue} valueB
+     * @param {CSSDisplayValue} valueB
      * *`(opcional)`*
      * * Uma string que represente um valor válido da propriedade *`display`*. Este valor substitui o valor padrão *`none`*.
      * -----
@@ -1118,34 +1321,37 @@ var AUX = (function () {
      * .toggleDisplay("flex", "contents")
      */
     AUX.prototype.toggleDisplay = function (valueA = "block", valueB = "none") {
-        __.err(".toggleDisplay")
+        __.err("AUX.toggleDisplay")
             .to(valueA, "string", false)
             .to(valueB, "string", false)
             .done();
-
+        
+        let display
         to((root) => {
-            x.display = window.getComputedStyle(root).display;
+            display = window.getComputedStyle(root).display;
             // Se o elemento não possui uma propriedade display atribuida inline ou se possui mas não sao nenhum dos valores padrões, verificar visibilidade para alteranar valores
             if (
-                x.display == "" ||
-                (x.display != valueA && x.display != valueB)
+                display == "" ||
+                (display != valueA && display != valueB)
             ) {
                 if (root.checkVisibility()) {
                     root.style.display = valueB;
                 } else {
                     root.style.display = valueA;
                 }
-            } else if (x.display == valueA) {
+            } else if (display == valueA) {
                 root.style.display = valueB;
-            } else if (x.display == valueB) {
+            } else if (display == valueB) {
                 root.style.display = valueA;
             }
         }, this.elements);
-        clear(x);
+
+        display = null
         return this;
     };
 
     //////////// .forms //////////////////
+    
     /**
      * * Obtém os valores dos campos de entrada (*`input`*, *`textarea`*, etc...) de um ou mais formulários e os organizam em um Objeto passado como parâmetro da função callback em *`handler`*.
      * * Os campos necessariamente precisam possuir um atributo *`name`* para serem processados.
@@ -1154,16 +1360,15 @@ var AUX = (function () {
      * > * *`details`* - Um objeto contendo algumas informações sobre os elementos manipulados.
      * * Nota: Inputs *`type="checkbox"`* recebem um valor boleano que indica se a caixa foi marcada ou não. Inputs *`type="radio"`* recebem o valor *`null`* se a caixa não for marcada ou se foi marcada mas não possui um *`value`*.
      * -----
-     * @param {(form: object, details: {form: HTMLElement, formList: Array<HTMLElement>})=>void} handler
+     * @param {FormHandlerFunction} handler
      * * Executa uma função para os objetos de valores obtido dos formulários.
      * ------
      * @example
-     * .forms(function(form, details){
-     *      // Seu código
-     * })
+     * .forms(function({form, details}){...})
      */
     AUX.prototype.forms = function (handler) {
-        __.err(".forms").to(handler, "function").done();
+        __.err("AUX.forms").to(handler, "function").done();
+        let x = {}
         to((root) => {
             x.inputList = root.querySelectorAll("*[name]");
             x.form = {};
@@ -1208,7 +1413,7 @@ var AUX = (function () {
             }
         }, this.elements);
 
-        clear(x);
+        x = null
         return this;
     };
 
@@ -1222,7 +1427,7 @@ var AUX = (function () {
      * > * Um HTMLElement ou *`array`* de elementos, um nodeList ou HTMLCollection.
      * > * Um seletor CSS válido que aponte para os elementos existente no DOM ou múltiplos seletores separados por vírgula, bem como um *`array`* de seletores.
      * ------
-     * @param {{amount: number, position: PositionReference, handler: _CallbackFunction}} options
+     * @param {{amount: number, position: PositionReference, handler: HandlerFunction} | HandlerFunction} options
      * *`(opcional)`*
      * * Executa função *`callback`* ou recebe objeto com as seguintes propriedades opcionais:
      * -----
@@ -1240,10 +1445,10 @@ var AUX = (function () {
      * .cloneTo(".container", {amount: 3, position: 0})
      *
      * // Pode executar um método para cada clone gerado
-     * .cloneTo(".container", {amount: 3, handler({item, get, def}){}})
+     * .cloneTo(".container", {amount: 3, handler({item, get, is}){...}})
      *
      * // Apenas executa uma função para cada clone gerado.
-     * .cloneTo(".container", function({item, get, def}){})
+     * .cloneTo(".container", function({item, get, is}){...})
      *
      */
     AUX.prototype.cloneTo = function (targets, options = {}) {
@@ -1266,17 +1471,19 @@ var AUX = (function () {
             handler: __.type(options) == "function" ? options : options.handler,
             amount: options.amount ?? 1,
         };
+        let x = {clones: []}
 
         targets = __.ex(targets, err);
-        x.clones = [];
+        
 
         //Gerar clones
         to((root) => {
             x.clones.push(
-                ...__.mapLoop(options.amount, (i) => root.cloneNode(true))
+                ...__.mapLoop(options.amount, () => { return root.cloneNode(true) })
             );
         }, this.elements);
 
+       
         //Inserir clones no alvos.
         to((target) => {
             x.childList = [...target.children];
@@ -1284,16 +1491,22 @@ var AUX = (function () {
             // Para cada destino
             for (let i = 0; i < x.clones.length; i++) {
                 x.clone = x.clones[i];
+                
                 target.insertBefore(x.clone, x.nodeRef);
 
                 if (options.handler) {
-                    options.handler(x.clone);
+                    options.handler(new Res({
+                        i: i,
+                        item: x.clone,
+                        itemList: x.clones,
+                        root: target,
+                        rootList: targets
+                    }));
                 }
             }
         }, targets);
 
-        clear(x);
-        err = null;
+        err = null, x = null;
         return this;
     };
 
@@ -1306,7 +1519,7 @@ var AUX = (function () {
      * @param {string|HTMLElement} target
      * * Um elemento pai para receber os novos elementos. Passe um HTMLElement ou um seletor CSS válido que aponte para um elemento existente no DOM.
      * -----
-     * @param {{position: PositionReference, handler: _CallbackFunction}} options
+     * @param {{position: PositionReference, handler: HandlerFunction} | HandlerFunction} options
      * *`(opcional)`*
      * * Executa função *`callback`* ou recebe objeto com as seguintes propriedades opcionais:
      * -----
@@ -1328,7 +1541,7 @@ var AUX = (function () {
      * .insertTo(".container", function({item, get, def}){})
      */
     AUX.prototype.insertTo = function (target, options = {}) {
-        let err = __.err(".insertTo");
+        let err = __.err("AUX.insertTo");
         err.to(target, "string, HTMLElement")
             .to(options, "object, function", false)
             .expectObj(options, { position: t.IDXREF, handler: "function" }, 2)
@@ -1340,98 +1553,32 @@ var AUX = (function () {
             handler: __.type(options) == "function" ? options : options.handler,
         };
 
+        let x = {}
+
         x.childList = [...target.children];
         x.nodeRef = __.indexRef(options.position, x.childList);
-        to((root) => {
-            target.insertBefore(root, x.nodeRef);
-
+        to((root, i) => {
+            
             if (options.handler) {
-                options.handler(root);
+                options.handler(new Res({
+                    i: i,
+                    item: root,
+                    itemList: this.elements,
+                    root: target,
+                    rootList: [target]
+                }));
             }
+            target.insertBefore(root, x.nodeRef);
         }, this.elements);
 
-        err = null;
-        clear(x);
+        err = null, x = null;
         return this;
     };
 
     ///////////// .replace /////////// NÃO INICIADO
     //AUX.prototype.replace = function(newElements){}
-
-    ////////// .createForms //////////////
-    /**
-     * * Cria formulários genéricos e os inserem no elemento.
-     * * Opcionalmente executa uma função *`callback`* para cada formulário criado onde se pode polir melhor a estrutura base.
-     * ------
-     * @param {object} inputTypes
-     * * Um objeto de propriedades que definem o label e o tipo dos campos *`input`*. O nome dado à propriedade deve ser um título *`label`* enquanto seu valor deve ser o tipo do input.
-     * -----
-     * @param {{amount: number, position: PositionReference, handler: _CallbackFunction}} options
-     */
-    AUX.prototype.createForms = function (inputTypes, options = {}) {
-        options = {
-            position: options.position ?? null,
-            handler: __.type(options) == "function" ? options : options.handler,
-            amount: options.amount ?? 1,
-        };
-
-        to((root) => {
-            x.childList = [...root.children];
-            x.nodeRef = __.indexRef(options.position, x.childList);
-            for (let i = 0; i < options.amount; i++) {
-                x.form = __.strHTML(
-                    `
-                <form action="" class="aux-form">
-                    <h1 class="form-title">Title Here</h1>
-                    <p class="form-description">Lorem ipsum, dolor sit amet consectetur adipisicing elit.</p>
-                    <div class="input-container">
-                        ${Object.keys(inputTypes)
-                            .map((name) => {
-                                return `
-                            <div class="${name}-container">
-                                <label for="${name}">${__.capitalize(
-                                    name
-                                )}</label>
-                                <input type="${
-                                    inputTypes[name]
-                                }" id="${name}" name="${name}" required>
-                                <p class="warn-msg"><!-- Mostrar mensagem de aviso --></p>
-                            </div>`;
-                            })
-                            .join("")}
-                            
-                        
-                        <div class="checkbox-container">
-                            <input type="checkbox" name="remember-pass" id="remember-pass">
-                            <label for="remember-pass">Remember password?</label>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn">Submit</button>
-                </form>
-                `
-                ).querySelector(".aux-form");
-
-                root.insertBefore(x.form, x.nodeRef);
-
-                if (options.handler) {
-                    options.handler(x.form);
-                }
-            }
-        }, this.elements);
-
-        clear(x);
-        return this;
-    };
-
-    ////////// .createTables //////////////////
-    /**
-     * @typedef {object} optionsObject
-     * @property {_CallbackFunction} handler Executa a função para cada resultado obtido.
-     * @property {number} rows Um número que indique a quantidade de linhas que a tebela deve possuir.
-     * @property {number} cols Um número que indique a quantidade de colunas que a tebela deve possuir.
-     * @property {PositionReference} position
-     * @property {number} amount
-     */
+   
+   
 
     //////////////// .on ////////////////////
     /**
@@ -1441,7 +1588,7 @@ var AUX = (function () {
      * @param {EventType} type
      * * Uma string que representa o tipo do evento esperado.
      * -----
-     * @param {_CallbackFunction} handler
+     * @param {EventHandlerFunction} handler
      * * Uma função que é executada quando o evento for disparado.
      * ----
      * @param {boolean | EventOptions | {times: number, removeStack: boolean}} options
@@ -1470,48 +1617,57 @@ var AUX = (function () {
      * .on("click", myHanlder, {removeStack: true}) // Adiciona o ouvinta em uma pilha de espera de remoção.
      */
     AUX.prototype.on = function (type, handler, options = {}) {
-        __.err(".on")
+        __.err("AUX.on")
             .to(type, "string")
             .to(handler, "function")
             .to(options, "boolean, object", false)
             .done();
-
+        
+        type = type.toLowerCase()
         if (options.times !== undefined) {
             var timeStack = [];
         }
 
-        // Função ouvinte real
-        var fn = function (evt) {
-            if (options.times !== undefined && timeStack !== null) {
-                for (let i = 0; i < timeStack.length; i++) {
-                    if (timeStack[i].target === this) {
-                        timeStack[i].count++;
-                        if (timeStack[i].count >= options.times) {
-                            // Remover ouvinte ao encerrar options.times
-                            this.removeEventListener(type, fn);
+        let thisEls = this.elements
+        let fn
 
-                            // Deletar referencia do contador
-                            timeStack.splice(
-                                timeStack.indexOf(timeStack[i]),
-                                1
-                            );
-                            timeStack.length <= 0 ? (timeStack = null) : null;
+        to((root, idx) => {
+            fn = function (evt) {
+                if (options.times !== undefined && timeStack !== null) {
+                    for (let i = 0; i < timeStack.length; i++) {
+                        if (timeStack[i].target === this) {
+                            timeStack[i].count++;
+                            if (timeStack[i].count >= options.times) {
+                                // Remover ouvinte ao encerrar options.times
+                                this.removeEventListener(type, timeStack[i].fn);
+
+                                // Deletar referencia do contador
+                                timeStack.splice(
+                                    timeStack.indexOf(timeStack[i]),
+                                    1
+                                );
+                                timeStack.length <= 0 ? (timeStack = null) : null;
+                            }
+                            break;
                         }
-
-                        break;
                     }
                 }
-            }
 
-            handler(this, evt);
-        };
+                //// Hanlder
+                handler(new Res({
+                    i: idx,
+                    item: this,
+                    itemList: thisEls
+                }), evt);
+            };
 
-        to((root) => {
+
             // Adicionar um contador para cada elemento
             if (options.times !== undefined) {
                 timeStack.push({
                     target: root,
                     count: 0,
+                    fn:fn
                 });
             }
 
@@ -1577,9 +1733,14 @@ var AUX = (function () {
      * }, {removeStack: true}) // Adiciona o ouvinte à uma pilha de espera de remoção.
      */
     AUX.prototype.events = function (listeners, options = {}) {
+        __.err("AUX.events")
+            .to(listeners, "object").isVoid(listeners)
+            .to(options, "object", false).done()
         let evtKeys = Object.keys(listeners);
         // Função ouvinte real
         let fn;
+        let x = {}
+        let thisEls = this.elements
         if (options.times !== undefined) {
             var timeList = {};
         }
@@ -1597,7 +1758,11 @@ var AUX = (function () {
                         timeList[idx][evtKeys[i]].count++;
                     }
 
-                    listeners[evtKeys[i]](this, evt);
+                    listeners[evtKeys[i]](new Res({
+                        i: idx,
+                        item: this,
+                        itemList: thisEls
+                    }), evt);
 
                     if (
                         options.times !== undefined &&
@@ -1637,11 +1802,12 @@ var AUX = (function () {
                 root.addEventListener(x.name, fn, options);
             }
         }, this.elements);
-        clear(x);
+        
+        x = null
         return this;
     };
 
-    //////////// .removeEvent ///////////// - TERMINADO
+    //////////// .removeEvent /////////////
     /**
      * * Remove um ouvinte de evento previamente registrado e adicionado à *`pilha de espera de remoção`*.
      * > **`Nota:`** Ouvintes de eventos só são removíveis com este método se foram adicionados com *`AUX.on()`* ou *`AUX.events()`*, os mesmos só são removíveis com este método se estiverem na *`pilha de remoção`* previamente definidos nos parâmetros *`options.removeStack`* dos métodos de inserção de eventos.
@@ -1649,7 +1815,7 @@ var AUX = (function () {
      * @param {string} type
      * * Uma *`string`* que representa o tipo do evento a ser removido.
      * ----
-     * @param {Function | string} handler
+     * @param {HandlerFunction} handler
      * * Uma referência a um ouvinte de evento ligado ao tipo do evento fornecido. Podendo ser a função que captura o evento, ou uma *`string`* que representa o nome da função.
      * > **`Nota:`** Só é recomendável usar os nomes ao invés da própria função como referência quando a função foi declarada imediatamente no método *`AUX.on()`* (*`funciona apenas com função nomeada`*) ou como um método direto de um objeto em *`AUX.events()`*.
      * ----
@@ -1721,7 +1887,7 @@ var AUX = (function () {
 
     ///////////// .siblings ////////////////////
     /**
-     * * Aponta para um ou mais elementos irmão e executa uma função *`callback`* para cada resultado obtido.
+     * * Percorre os elementos irmãos e executa uma função *`callback`* para cada resultado.
      * ------
      * @param {SiblingKeys} refKey
      * * Uma chave de refência que indentifica qual ou quais irmão apontar ou um seletor CSS que aponte para um ou mais irmãos existentes na lista de elementos irmãos.
@@ -1733,7 +1899,7 @@ var AUX = (function () {
      * > * *`"all"`* - Aponta para todos os irmão ao redor dele.
      * > * Um valor numérico positivo começando em 1 indicando a posição do irmão depois dele a ser obtido ou um valor numérico negativo começando em -1 indicando a posição do irmão anterior a ele a ser obtido. Considere que o elemento principal possui automaticamente a posição 0 na lista de pesquisa, pois toda pesquia começa a partir dele.
      * ------
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Executa uma função para cada irmão obtido.
      * ----
      * @example
@@ -1746,11 +1912,12 @@ var AUX = (function () {
      * .siblings(".foo", function(){...})
      */
     AUX.prototype.siblings = function (refKey, handler) {
-        __.err(".siblings")
+        __.err("AUX.siblings")
             .to(refKey, "string, number")
             .to(handler, "function")
             .done();
-
+        
+        let x = {}
         to((root) => {
             x.res = [];
             x.siblingList = [...root.parentNode.children];
@@ -1789,11 +1956,22 @@ var AUX = (function () {
                 }
             }
 
-            to((item) => {
-                handler(item);
+            to((item, i) => {
+                if (item !== undefined && item !== null) {
+                    handler(new Res({
+                        i: i,
+                        item: item,
+                        itemList: x.res,
+                        root: root,
+                        rootList: this.elements
+                    }));
+                }
+
             }, x.res);
+
         }, this.elements);
-        clear(x);
+        
+        x = null
         return this;
     };
 
@@ -1805,24 +1983,32 @@ var AUX = (function () {
      * @param {string} selectors
      * * Um seletor CSS válido para corresponder a algum elemento ancestral.
      * -----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Executa uma função para o primeiro resultado da busca na árvore de nós ancestrais.
      * -----
      * @example
      * .closest(".parent-2", function(){...})
      */
     AUX.prototype.closest = function (selectors, handler) {
-        __.err(".closest")
+        __.err("AUX.closest")
             .to(selectors, "string")
             .to(handler, "function")
             .done();
-        to((root) => {
-            x.res = root.closest(selectors);
-            if (x.res) {
-                handler(x.res);
+        let res
+        to((root, i) => {
+            res = root.closest(selectors);
+            if (res) {
+                handler(new Res({
+                    i: i,
+                    item: res,
+                    itemList: [res],
+                    root: root,
+                    rootList: this.elements
+                }));
             }
         }, this.elements);
-        clear(x);
+        
+        res = null
         return this;
     };
 
@@ -1830,22 +2016,27 @@ var AUX = (function () {
     /**
      * * Executa uma função *`callback`* para o elemento pai do elemento atual. Se um pai não existir ou não form um DOM nenhuma operação ocorre.
      * -----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Uma função de chamada de retorno caso haja um resultado.
      * -----
      * @example
      * .parent(function(){...})
      */
     AUX.prototype.parent = function (handler) {
-        __.err(".parent").to(handler, "function").done();
-        to((root) => {
-            x.parent = root.parentElement;
-            if (x.parent) {
-                handler(x.parent);
+        __.err("AUX.parent").to(handler, "function").done();
+        
+        to((root, i) => {
+            if (root.parentElement) {
+                handler(new Res({
+                    i: i,
+                    item: root.parentElement,
+                    itemList: [root.parentElement],
+                    root: root,
+                    rootList: this.elements
+                }));
             }
         }, this.elements);
 
-        clear(x);
         return this;
     };
 
@@ -1854,25 +2045,35 @@ var AUX = (function () {
      * * Percorre todos os ancestrais (em direção à raiz do documento), começando pelo elemento pai, e executa uma função *`callback`* para cada ancestral obtido.
      * * Se o elemento não possuir nenhum ancestral (como um pai, avô, etc...) nenhuma operação será executada.
      * ------
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Uma função para cada elemento ancestral ao elemento atual.
      *  ------
      * @example
      * .ancestors(function(){...})
      */
     AUX.prototype.ancestors = function (handler) {
-        __.err(".ancestors").to(handler, "function").done();
+        __.err("AUX.ancestors").to(handler, "function").done();
+        let parent
+        let i = 0
         to((root) => {
-            x.parent = root;
+            parent = root;
             while (true) {
-                x.parent = x.parent.parentElement;
-                if (!x.parent) {
+                parent = parent.parentElement;
+                if (!parent) {
                     break;
                 }
-                handler(x.parent);
+                handler(new Res({
+                    i: i,
+                    item: parent,
+                    itemList: [parent],
+                    root: root,
+                    rootList: this.elements
+                }));
+                i++
             }
         }, this.elements);
-        clear(x);
+        
+        parent = null
         return this;
     };
 
@@ -1885,17 +2086,19 @@ var AUX = (function () {
      * @param {string | HTMLElement} selector
      * * Uma string que represente um seletor CSS que aponte para um único elemento existente dentro do elemento principal ou um elemento HTML existente dentro do mesmo.
      * -----
-     * @param {_CallbackFunction} handler
+     * @param {HandlerFunction} handler
      * * Uma função para cada elemento que compõe o caminho até chegar ao destino.
      * -----
      * @example
      * .childPath("#node-10", function(){...})
      */
     AUX.prototype.childPath = function (selector, handler) {
-        __.err(".childPath")
+        __.err("AUX.childPath")
             .to(selector, "string, HTMLElement")
             .to(handler, "function")
             .done();
+        
+        let x = {}
         to((root) => {
             x.pathList = [];
 
@@ -1909,7 +2112,7 @@ var AUX = (function () {
             //Obter lista de caminho até o destino
             for (let i = 0; i < x.pathList.length; i++) {
                 x.newPath = x.pathList[i];
-                if (x.newPath /*&& x.newPath.parentElement !== root*/) {
+                if (x.newPath && x.newPath.parentElement !== root) {
                     x.pathList.push(x.newPath.parentElement);
                 } else {
                     break;
@@ -1920,17 +2123,25 @@ var AUX = (function () {
             for (let i = 0; i < x.pathList.length; i++) {
                 x.res = x.pathList[x.pathList.length - i - 1];
                 if (x.res) {
-                    handler(x.res);
+                    handler(new Res({
+                        i: i,
+                        item: x.res,
+                        itemList: x.pathList,
+                        root: root,
+                        rootList: this.elements
+                    }));
                 }
             }
         }, this.elements);
 
-        clear(x);
+        x = null
         return this;
     };
 
     // END OF LIB ------------------------------------------------------
     return AUX;
 })();
+
+
 
 export default AUX;

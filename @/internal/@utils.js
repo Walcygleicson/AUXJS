@@ -181,7 +181,7 @@ __.err = function (thisName) {
      * * Obtém informações do parâmetro para tratamento dos erros.
      * 
      * @param {argument} argValue O valor passado como argumento do parametro
-     * @param {"string" | "function" | "array" | "number" | "object" | "HTMLElement" | "HTMLCollection" | "comment" | "text" | "nodeList" | "document" | "null" | "undefined" | "elementList" | "HTMLSelector" | "bigInt" | "symbol" | "number, string" | "function, null" | "number, string, array" | "array, object"} types Uma strig que representa um tipo de valor que o parametro deve receber, múltiplos tipos devem ser separados por vírgula
+     * @param {"string" | "function" | "array" | "number" | "object" | "HTMLElement" | "HTMLCollection" | "comment" | "text" | "nodeList" | "document" | "null" | "undefined" | "elementList" | "HTMLSelector" | "bigInt" | "symbol" | "number, string" | "function, null" | "number, string, array" | "array, object" | "string, HTMLElement"} types Uma strig que representa um tipo de valor que o parametro deve receber, múltiplos tipos devem ser separados por vírgula
      * @param {boolean} required Define se o parametro é obrigatório. O padrão é **true**.
      */
     fn.to = function (argValue, types, required = true) {
