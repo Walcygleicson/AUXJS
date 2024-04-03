@@ -1,5 +1,8 @@
 import"../internal/@interfaces.js"
 import { AUXProperties } from "../internal/@interfaces.js";
+import AUX from "../../module/Aux-Main.js";
+
+var aux = AUX("html")
 
 
 
@@ -277,15 +280,22 @@ import { AUXProperties } from "../internal/@interfaces.js";
  * }} StyleProperties
  */
 
-/**
- * @typedef {Array<Selector|HTMLElement>|NodeList|HTMLCollection} ElementList Uma lista de elementos HTML e/ou Seletores válidos. Pode ser um Array, um Object, um NodeList ou um HTMLCollection.
- */
+
 
 ///////// HANLDER FUNCTIONS ////////////
+/**
+ * @typedef {import("../internal/@interfaces.js").ItemGetters} ItemGetters
+ */
 
 /**
  * @callback HandlerFunction
- * @param {AUXProperties} source
+ * @param {ItemGetters} resources
+ * * Objeto fornece propriedades somente leitura sobre o elemento, o alvo, e o estado da operação.
+ * * Fornece uma propriedade *set* onde é possível aplicar todos os métodos *`AUX`* em cada *`item`*.
+ * ----
+ * @param {number} index
+ * * Fornece o número de índice do *`item`* (*elemento*) atual na lista de itens da operação.
+ * -----
  * 
  * @callback EventHandlerFunction
  * @param {AUXProperties} source

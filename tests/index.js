@@ -27,7 +27,14 @@ const um = AUX(one)
 const dois = AUX(two)
 let cont = 0
 
-dois.childPath("#ch-a > div", (e) => {
-    console.log(e)
-})
+
+
+
+um.removeChilds(["#x-(0-2)", "li(2-3), lu"]) 
+
+
+
+
+
+
 

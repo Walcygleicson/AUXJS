@@ -1,5 +1,6 @@
 import __ from "../@/internal/@utils.js";
 import { AUXProperties as Res } from "../@/internal/@interfaces.js";
+import { ItemGetters } from "../@/internal/@interfaces.js";
 
 "use strict";
 /**
@@ -49,11 +50,7 @@ var AUX = (function () {
     const version = "1.0.0";
 
     const NUMB = 999999999;
-    /**Armazena propriedades de valores temporários.
-     * >
-     * **Limpar as propriedades não mais usadas com *`clear( )`***
-     */
-    var x = {};
+    
     /**Armazena tipos personalisados */
     const t = {
         /**"number, string, HTMLElement, null" */
@@ -135,12 +132,7 @@ var AUX = (function () {
         }
     };
 
-    /**Remove propriedades de um object */
-    const clear = function (obj) {
-        Object.keys(obj).forEach((prop) => {
-            delete obj[prop];
-        });
-    };
+    
     //================ MÉTODOS PÚBLICOS ===========================================//
     ///
     ///
@@ -166,26 +158,27 @@ var AUX = (function () {
      * * Nota: Qualquer valor que não seja ou não faça nenhum tipo de referência a algum elemento HTML resultará em um erro!
      * @returns {AUX}
      */
-    var AUX = function (selectors) {
+    var AUX = function (selectors = window) {
         if (!(this instanceof AUX)) {
             return new AUX(selectors);
         }
         const thisObj = this;
         //Tratar erros de argumento
         const error = __.err("AUX");
-        error.to(selectors, t.ELREF).isVoid(selectors, 1).done();
+
+        error.to(selectors, t.ELREF + ", window").isVoid(selectors, 1).done();
 
         /** * Retorna um Array contento todos os elementos da lista de elementos obtidos por *`AUX`* @type {Array<HTMLElement>}*/
-        this.elements = __.ex(selectors, error);
-        const elements = this.elements;
+        this.targets = __.ex(selectors, error);
+        
         /** * Retorna a quantidade de elementos da lista obtida por *`AUX`*. @type {number}*/
-        this.length = this.elements.length;
+        this.length = this.targets.length || null;
 
         /**
          * * Objeto de propriedades que retornam os valores de todas as propriedades CSS atualizadas de um elemento (o primeiro da lista de manipulação se existir mais de um).
-         * @type {CSSStyleDeclaration}
+         * @type {CSSStyleDeclaration | null}
          */
-        this.getStyle = window.getComputedStyle(this.elements[0]);
+        this.getStyle = selectors !== window? window.getComputedStyle(this.targets[0]) : null
 
         /**
          * * Objeto de métodos que inserem templates genéricos pré-montados sem estilos aplicados
@@ -254,7 +247,7 @@ var AUX = (function () {
                             options.handler(x.table);
                         }
                     }
-                }, elements);
+                }, thisObj.targets);
                 clear(x);
                 return thisObj.insert;
             },
@@ -318,10 +311,10 @@ var AUX = (function () {
                             options.handler(x.form);
                         }
                     }
-                }, this.elements);
+                }, thisObj.targets);
 
                 x = null
-                return this;
+                return thisObj.insert;
             }
         };
 
@@ -343,7 +336,7 @@ var AUX = (function () {
             add(selectors) {
                 var err = __.err("AUX.list.add");
                 err.to(selectors, t.ELREF).isVoid(selectors).done();
-                thisObj.elements.push(...__.ex(selectors, err));
+                thisObj.targets.push(...__.ex(selectors, err));
                 err = null;
                 return thisObj;
             },
@@ -376,9 +369,9 @@ var AUX = (function () {
                     .done();
                 whichElements = __.getElementsOfList(
                     whichElements,
-                    thisObj.elements
+                    thisObj.targets
                 );
-                thisObj.elements = thisObj.elements.filter((e) => {
+                thisObj.targets = thisObj.targets.filter((e) => {
                     if (!whichElements.includes(e)) {
                         return e;
                     }
@@ -438,9 +431,10 @@ var AUX = (function () {
      * .text("Click-Me") => <button>Click-me</button>
      */
     AUX.prototype.text = function (text = "") {
+        __.err("AUX.text").isWindow(this.targets).done()
         to((root) => {
             root.textContent = text;
-        }, this.elements);
+        }, this.targets);
         return this;
     };
 
@@ -456,9 +450,10 @@ var AUX = (function () {
      * .html("<button>Click</button>") => <div><button>Click</button></div>
      */
     AUX.prototype.html = function (stringHTML = "") {
+         __.err("AUX.html").isWindow(this.targets).done();
         to((root) => {
             root.innerHTML = stringHTML;
-        }, this.elements);
+        }, this.targets);
         return this;
     };
 
@@ -499,6 +494,7 @@ var AUX = (function () {
         __.err("AUX.style")
             .to(styleProps, "object")
             .isVoid(styleProps)
+            .isWindow(this.targets)
             .to(defaultUnit, "number, string", false)
             .done();
 
@@ -516,7 +512,7 @@ var AUX = (function () {
                         : styleProps[prop]
                 );
             });
-        }, this.elements);
+        }, this.targets);
         propName = null;
         return this;
     };
@@ -526,12 +522,12 @@ var AUX = (function () {
      * * Imprime no console do navegador os elementos da lista de manipulação principal.
      */
     AUX.prototype.console = function () {
-        this.elements.length > 1
+        this.targets.length > 1
             ? (console.group("elementList (Array):"),
-              console.log(this.elements),
-              console.log(...this.elements))
-            : (console.group(this.elements[0].tagName + " Element:"),
-              console.log(...this.elements));
+              console.log(this.targets),
+              console.log(...this.targets))
+            : (console.group(this.targets[0] !== window? this.targets[0].tagName + " Element:" : "Window Object"),
+              console.log(...this.targets));
         console.groupEnd();
 
         return this;
@@ -561,24 +557,26 @@ var AUX = (function () {
         __.err("AUX.addClass")
             .to(classNames, "string, array, object")
             .isVoid(classNames)
+            .isWindow(this.targets)
             .to(position, "number", false)
             .done();
 
         //Separar nomes de classe por vírgula se passado uma string
         classNames = __.arr(classNames, true);
 
+        let classList
         to((e) => {
-            x.classList = [...e.classList];
+            classList = [...e.classList];
 
             //Inserir na posição
-            x.classList.splice(position, 0, ...classNames);
+            classList.splice(position, 0, ...classNames);
 
             //Juntar e adicionar classes ao elemento
-            x.classList = x.classList.join(" ");
-            e.setAttribute("class", x.classList);
-        }, this.elements);
+            classList = classList.join(" ");
+            e.setAttribute("class", classList);
+        }, this.targets);
 
-        clear(x);
+        classList = null
         return this;
     };
 
@@ -601,7 +599,11 @@ var AUX = (function () {
      *
      */
     AUX.prototype.attrs = function (attributes) {
-        __.err("AUX.attrs").to(attributes, "object").isVoid(attributes).done();
+        __.err("AUX.attrs")
+            .isWindow(this.targets)
+            .to(attributes, "object")
+            .isVoid(attributes)
+            .done();
 
         to((root) => {
             Object.keys(attributes).forEach((name) => {
@@ -612,7 +614,7 @@ var AUX = (function () {
                     root.setAttribute(name, attributes[name]);
                 }
             });
-        }, this.elements);
+        }, this.targets);
         return this;
     };
 
@@ -647,6 +649,7 @@ var AUX = (function () {
     AUX.prototype.appendHTML = function (HTMLString, options = {}) {
         var err = __.err("AUX.appendHTML");
         err.to(HTMLString, "string")
+            .isWindow(this.targets)
             .to(options, "function, object", false)
             .expectObj(
                 options,
@@ -665,6 +668,8 @@ var AUX = (function () {
             position: options.position ?? null,
         };
 
+        let x = {}
+        let cb
         to((root) => {
             x.childList = [...root.children];
 
@@ -677,25 +682,24 @@ var AUX = (function () {
 
                 //Callback function
                 if (options.handler) {
-                    options.handler(
-                        new Res({
-                            i: i,
-                            item: options.fragment,
-                            root: root,
-                            rootList: this.elements,
-                            itemList: [...x.htmlText.children],
-                        })
-                    );
+                    cb = new ItemGetters({
+                        i: i,
+                        item: options.fragment,
+                        itemList: [...x.htmlText.children],
+                        target: root,
+                        targetList: this.targets
+                    })
+                    options.handler(cb, i);
                 }
 
                 //Obter o elemento filho referência para o insertBefore
                 x.nodeRef = __.indexRef(options.position, x.childList);
                 root.insertBefore(x.htmlText, x.nodeRef);
             }
-        }, this.elements);
+        }, this.targets);
 
-        clear(x);
-        err = null;
+    
+        err = null, x = null, cb = null;
         return this;
     };
 
@@ -739,6 +743,7 @@ var AUX = (function () {
     AUX.prototype.appendChilds = function (selectors, options = {}) {
         let err = __.err("AUX.appendChilds");
         err.to(selectors, t.ELREF)
+            .isWindow(this.targets)
             .isVoid(selectors)
             .to(options, "function, object", false)
             .expectObj(
@@ -752,8 +757,9 @@ var AUX = (function () {
             .done();
 
         selectors = __.ex(selectors, err);
+        let x = {}
 
-        x.root = this.elements[0];
+        x.root = this.targets[0];
         x.childList = [...x.root.children];
 
         options = {
@@ -761,26 +767,30 @@ var AUX = (function () {
             handler: __.type(options) == "function" ? options : options.handler,
         };
 
+        if (options.handler) {
+            var cb
+        } 
+
         // Para cada filho a ser inserido...
-        selectors.forEach((child) => {
+        selectors.forEach((child, i) => {
             //Callback function
             if (options.handler) {
-                options.handler(
-                    new Res({
-                        item: child,
-                        root: x.root,
-                        rootList: this.elements,
-                        itemList: selectors,
-                    })
-                );
-                //Obter o elemento filho referência para o insertBefore
-                x.nodeRef = __.indexRef(options.position, x.childList);
-                this.elements[0].insertBefore(child, x.nodeRef);
+                cb = new ItemGetters({
+                    i: i,
+                    item: child,
+                    itemList: selectors,
+                    target: x.root,
+                    targetList: this.targets
+                })
+                options.handler(cb, i);
             }
+            //Obter o elemento filho referência para o insertBefore
+            x.nodeRef = __.indexRef(options.position, x.childList);
+            this.targets[0].insertBefore(child, x.nodeRef);
         });
 
-        clear(x);
-        err = null;
+        
+        err = null, x = null, cb = null;
         return this;
     };
 
@@ -788,7 +798,7 @@ var AUX = (function () {
     /**
      * * Remove um ou mais elementos filhos do elemento *`alvo`*. Opcionalmente pode executar uma função *`callback`* para cada filho removido.
      * ----
-     * @param {PositionReference} childReference
+     * @param {ChildReference} childs
      * * Uma referência de quais filhos da lista de nós filhos remover. Podendo ser:
      * >* A posição (índice) do filho para ser removido ou um array contendo as posições para múltiplas remoções.
      * >* Um seletor CSS que aponte para um nó filho (ou múltiplos seletores separardos por vírgula) para ser removido ou um array contendo os seletores.
@@ -804,9 +814,10 @@ var AUX = (function () {
      * .removeChilds([1,2,6]) => Remove múltiplos filhos pelos índices.
      * .removeChilds(".div", function({item, get, is}){...}) => Executa uma função para o filho removido.
      */
-    AUX.prototype.removeChilds = function (childReference, handler = Function) {
+    AUX.prototype.removeChilds = function (childs, handler = Function) {
         __.err("AUX.removeChilds")
-            .to(childReference, "number, string, array, HTMLElement")
+            .isWindow(this.targets)
+            .to(childs, "number, string, array, HTMLElement")
             .to(handler, "function", false)
             .done();
         let e = {
@@ -814,7 +825,7 @@ var AUX = (function () {
             removed: null,
         };
         to((root) => {
-            e.list = __.getElementsOfList(childReference, [...root.children]);
+            e.list = __.getElementsOfList(childs, [...root.children]);
 
             for (let i = 0; i < e.list.length; i++) {
                 //Remove e armazena o nó removido
@@ -822,17 +833,17 @@ var AUX = (function () {
 
                 if (handler !== Function) {
                     handler(
-                        new Res({
+                        new ItemGetters({
                             item: e.removed,
                             i: i,
                             itemList: e.list,
-                            root: root,
-                            rootList: this.elements,
-                        })
+                            target: root,
+                            targetList: this.targets,
+                        }), i
                     );
                 }
             }
-        }, this.elements);
+        }, this.targets);
 
         e = null;
         return this;
@@ -1102,15 +1113,16 @@ var AUX = (function () {
      */
     AUX.prototype.for = function (handler) {
         __.err("AUX.for").to(handler, "function").done();
-        for (let i = 0; i < this.elements.length; i++) {
-            handler(
-                new Res({
+        let cb
+        for (let i = 0; i < this.targets.length; i++) {
+            cb = new ItemGetters({
                     i: i,
-                    item: this.elements[i],
-                    itemList: this.elements,
+                    item: this.targets[i],
+                    itemList: this.targets,
                 })
-            );
+            handler(cb);
         }
+        cb = null
         return this;
     };
 
@@ -1241,7 +1253,7 @@ var AUX = (function () {
      * .forChilds(({item, get, i, is})=>{...})
      */
     AUX.prototype.childs = function (handler) {
-        __.err("AUX.childs").to(handler, "function").done();
+        __.err("AUX.childs").isWindow(this.elements).to(handler, "function").done();
 
         to((root) => {
             for (let i = 0; i < root.children.length; i++) {
@@ -1351,7 +1363,6 @@ var AUX = (function () {
     };
 
     //////////// .forms //////////////////
-    
     /**
      * * Obtém os valores dos campos de entrada (*`input`*, *`textarea`*, etc...) de um ou mais formulários e os organizam em um Objeto passado como parâmetro da função callback em *`handler`*.
      * * Os campos necessariamente precisam possuir um atributo *`name`* para serem processados.
@@ -1575,8 +1586,83 @@ var AUX = (function () {
         return this;
     };
 
-    ///////////// .replace /////////// NÃO INICIADO
-    //AUX.prototype.replace = function(newElements){}
+    ///////////// .replace /////////////
+    /**
+     * * Substitui o elemento na lista de elementos filhos de seu nó pai por um novo elemento passado.
+     * * Opcionalmente executa uma função *`callback`* para o elemento que foi substituído (removido).
+     * ----
+     * @param {ElementSelector} substitutes
+     * @param {*} handler
+     * 
+     * @example
+     * .replace(".div")
+     * .replace(".div", function(get, i){...})
+     */
+    AUX.prototype.replace = function (substitutes, handler=Function) {
+        let err = __.err("AUX.replace");
+        err.to(substitutes, t.ELREF).done()
+        substitutes = __.ex(substitutes, err)
+        let cb
+        to((root, i) => {
+            if (root.parentElement) {
+                root.parentElement.replaceChild(substitutes[i], root);
+                if (handler !== Function) {
+                    cb = new ItemGetters({
+                        i: i,
+                        item: root,
+                        itemList: this.elements,
+                    })
+                    handler(cb)
+                }
+            }
+        }, this.elements)
+
+        err = null, cb = null
+        return this
+    }
+
+    //////////////// .remove ///////////////////
+    /**
+     * * Remove o elemento alvo de seu nó pai se houver um.
+     * * Opcionalmente executa uma função *`callback`* para o elemento removido.
+     * * Se desejar remover o elemento do seu pai atual para o inserir em outro pai recomenda-se *`AUX.insertTo()`* ao invés deste.
+     * -----
+     * @param {HandlerFunction} handler 
+     * * Uma função para o elemento removido.
+     * ----
+     * @example
+     * 
+     * .remove()
+     * .remove(function(get, i){...})
+     */
+    AUX.prototype.remove = function (handler=Function) {
+        __.err("AUX.remove")
+            .isWindow(this.elements)
+            .to(handler, "function").done()
+        let cb
+        to((root, i) => {
+            if (root.parentElement) {
+                cb = new ItemGetters({
+                    i: i,
+                    item: root,
+                    itemList: this.elements,
+                })
+
+                if (handler !== Function) {
+                    handler(cb)
+                }
+
+                root.remove()
+                
+            }
+        }, this.elements)
+
+        cb = null
+        return this
+    }
+
+    ///////////// .exchange //////////////////
+    AUX.prototype.exchange = function (substitutes){}
    
    
 
@@ -2141,7 +2227,6 @@ var AUX = (function () {
     // END OF LIB ------------------------------------------------------
     return AUX;
 })();
-
 
 
 export default AUX;

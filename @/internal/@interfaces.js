@@ -5,7 +5,7 @@ export class AUXProperties {
     
     constructor({ item, i, root, rootList, itemList }) {
         /** * Forncece propriedades somente leitura sobre o *`item`* atual. */
-        this.get = Object.freeze(new ItemGetters(item, itemList))
+        this.get = Object.freeze(new ItemGetters(item, itemList, i, root))
         
         /**
          * * Fornece os métodos de manipulação *`AUX`* para *`item`* atual.
@@ -14,160 +14,259 @@ export class AUXProperties {
          * item.style()
          * item.on()...
          * */
-        this.item = __.type(item) == 'documentFragment'? Object.freeze(AUX(item.children)) : Object.freeze(AUX(item))
-        /** * Provém métodos de análises sobre o *`item`* e seus próximos (*`pai e/ou filhos`*). */
-        this.is = Object.freeze(new IsMethods(item))
-        /** * O índice da iteração atual. */
-        this.i = i
-        /** * Objeto de propriedades do elemento *`alvo`* (elemento da lista de manipulação) da iteração atual. Se *`item`*, o elemento iterado, for o um elemento da lista de manipulação, então este valor passa a ser *`null`*. */
-        this.target = root
-            ? Object.freeze({
-                  /** * Lista de manipulação. @type {Array<HTMLElement>} */
-                  list: rootList,
-                  /** * O elemento *`alvo`* da iteração atual presente na *`lista de manipulação`*. @type {HTMLElement} */
-                  current: root,
-                  /** * Index do elemento *`alvo`* @type {number} */
-                  i: rootList.indexOf(root),
-                  /** * Forncece propriedades somente leitura referente ao *`target`* atual. */
-                  get: Object.freeze(new ItemGetters(root, rootList)),
-              })
-            : null;
+        this.item = __.type(item) == 'documentFragment' ? Object.freeze(AUX(item.children)) : Object.freeze(AUX(item))
+       
     }
 };
 
-class ItemGetters {
-    /**
-     * 
-     * @param {HTMLElement} item 
-     * @param {Array} itemList 
-     */
-    constructor(item, itemList) {
-        /*** Obtém o elemento da iteração atual. @type {HTMLElement}. */
+/**
+ * @typedef {ItemGetters} ItemGetters
+ */
+export class ItemGetters {
+    constructor({ item, itemList, i, target, targetList }) {
+        /**
+         * * Obtém o elemento que está sendo operado na iteração atual.
+         * @type {HTMLElement | window | DocumentFragment}
+        */
         this.item = item;
-        /** * Obtém o elemento pai mais próximo. Se ele não possui um pai o valor é *null* @type {HTMLElement | null}. */
-        this.parent = item.parentNode || null;
+
+        /**
+         * * Obtém o índice do *`item`* atual na lista de itens da operação.
+         * > Nota: O índice fornecido não é o índice do *`item`* no DOM. Para obter a posição deste na árvore DOM acessar *`index`* propriedade.
+         * 
+         * @type {number}
+         */
+        this.i = i;
+
+        /**
+         * * Fornece os métodos *`AUX`* para o *`item`* atual.
+         */
+        this.set =
+            __.type(item) == "documentFragment"
+                ? Object.freeze(AUX(item.children))
+                : Object.freeze(AUX(item));
         
-        /** * Obtém o índice do elemento na lista de filhos em que ele está. Se ele não for filho de nenhum elemento o valor é *null* @type {number | null}. */
-        this.index = this.parent ? [...this.parent.children].indexOf(item) : null;
-        /** * Obtém a lista da familia em que o elemento pertence (`lista de filhos do elemento pai`). Se ele não for filho de nenhum elemento o valor é *null* @type {Array | null}. */
-        this.familyList = item.parentElement? [...item.parentElement.children] : null
+        /**
+         * * Obtém o *`elemento alvo`* da operação atual.
+         * > * Nota: Se estiver operando sobre estes elementos o valor é *`null`* pois o elemento alvo passa a ser o *`item`*.
+         * > * *`target`*, *`targetList`* e *`targetI`* só são obtidos quando estiver operando sobre outros elementos onde este é o alvo final, ou seja, quando a operação for sobre os filhos, pai, irmãos ou outros elementos externos onde este será o destino final da operação seja ela qual for.
+         * 
+         * @type {HTMLElement | window | DocumentFragment}
+         */
+        this.target = target || null;
+
+        /**
+         * * Obtém a lista de *`elementos alvos`* da operação atual.
+         * @type {Array<HTMLElement>}
+         */
+        this.targetList = targetList || null;
+
+        /**
+         * * Obtém o índice do *`elemento alvo`* da operação atual na lista de elementos alvos em que ele estiver.
+         * 
+         * @type {number | null}
+         */
+        this.targetI = target ? targetList[targetList.indexOf(target)] : null;
+
+        /**
+         * * Obtém a lista de itens do processo atual.
+         * @type {Array<HTMLElement>}
+         */
         this.itemList = itemList || [];
-        this.id = item.id || null;
-        this.class = item.className || null;
-        this.classList = __.type(item) == 'documentFragment'? null : [...item.classList] || null;
-        this.tagName = __.type(item) == 'documentFragment'? null : item.tagName.toLowerCase();
-        this.attrList = __.type(item) == 'documentFragment'?null: [...item.attributes] || null;
-        this.nextItem = __.type(item) == 'documentFragment'? null :itemList[itemList.indexOf(item) + 1] || null;
-        this.prevItem = __.type(item) == 'documentFragment'? null : itemList[itemList.indexOf(item) - 1] || null;
-        this.empty = item.childNodes.length <= 0 ? true : false;
-        this.text = item.textContent || null;
-        this.value = item.value || null;
-        this.checked = item.checked === undefined ? null : item.checked;
-        this.visible = __.type(item) == 'documentFragment'? null : item.checkVisibility({
-            checkOpacity: true,
-            checkVisibilityCSS: true,
-        });
-        this.prevSibling = item.previousElementSibling || null;
-        this.nextSibling = item.nextElementSibling || null;
-        this.display = __.type(item) == 'documentFragment'? null : getComputedStyle(item).display;
-        this.layer = __.type(item) == 'documentFragment'? null : getComputedStyle(item).zIndex;
-        this.position = __.type(item) == 'documentFragment'? null : getComputedStyle(item).position;
-        this.opacity = __.type(item) == 'documentFragment'? null : getComputedStyle(item).opacity;
-        this.style = __.type(item) == 'documentFragment'? null : getComputedStyle(item);
-        this.rect = __.type(item) == 'documentFragment'? null : item.getBoundingClientRect();
-        this.onView = (function () {
-            if (__.type(item) !== 'documentFragment') {
-                const pos = item.getBoundingClientRect();
-                return pos.top >= 0 && pos.bottom <= window.innerHeight
-                    ? true
-                    : false;
-            }
 
-            return null
-        })();
+        /**
+         * * Obtém o próximo *`item`* da lista de itens do processo atual.
+         * @type {HTMLElement | null}
+         */
+        this.nextItem =
+            __.type(item) == "documentFragment" || item === window
+                ? null
+                : itemList[itemList.indexOf(item) + 1] || null;
+
+        /**
+         * * Obtém o *`item`* anterior da lista de itens do processo atual.
+         * @type {HTMLElement | null}
+         */
+        this.prevItem =
+            __.type(item) == "documentFragment" || item === window
+                ? null
+                : itemList[itemList.indexOf(item) - 1] || null;
+    }
+
+    /** * Obtém o objeto *`DOMRect`* do *`item`* atual. */
+    get rect() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : this.item.getBoundingClientRect();
+    }
+
+    /** * Obtém o valor da propriedade computada *`display`* do *`item`* atual. */
+    get display() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : getComputedStyle(this.item).display;
+    }
+
+    /**
+     * * Obtém o elemento irmão sucessor do *`item`* atual.
+     */
+    get nextSibling() {
+        return this.item.nextElementSibling || null;
+    }
+
+    /**
+     * * Obtém o elemento irmão antecessor do *`item`* atual.
+     */
+    get prevSibling() {
+        return this.item.previousElementSibling || null;
+    }
+
+    /**
+     * * Retorna o elemento pai no *`item`* atual.
+     */
+    get parent() {
+        console.log(this.item);
+        return this.item.parentElement || null;
+    }
+
+    /**
+     * * Indica se o *`item`* atual está visível na tela, levando em consideração sua *`visibilidade`*, *`opacidade`* e *`display`*.
+     */
+    get isVisible() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : this.item.checkVisibility({
+                  checkOpacity: true,
+                  checkVisibilityCSS: true,
+              });
+    }
+
+    /**
+     * * Indica se o *`item`* atual está vazio (*`sem elementos filhos ou conteúdo de texto`*)
+     */
+    get isEmpty() {
+        return this.item !== window
+            ? this.item.children.length <= 0 && this.item.innerText == ""
+                ? true
+                : false
+            : null;
+    }
+
+    /**
+     * * Obtém o valor da opacidade (*`CSS opacity`*) do *`item`* atual.
+     */
+    get opacity() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : getComputedStyle(this.item).opacity;
+    }
+
+    /**
+     * * Obtém um *`objeto`* de propriedades de estilos CSS computados do *`item`* atual.
+     */
+    get style() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : getComputedStyle(this.item);
+    }
+
+    /**
+     * * Obtém a camada (*`z-index`*) do *`item`* atual.
+     */
+    get layer() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : getComputedStyle(this.item).zIndex;
+    }
+
+    /** * Obtém o valor do atributo HTML *`checked`* do *`item`* atual. */
+    get checked() {
+        return this.item.checked === undefined ? null : this.item.checked;
+    }
+
+    /** * Obtém o valor do atributo HTML *`selected`* do *`item`* atual. */
+    get selected() {
+        return this.item.selected === undefined ? null : this.item.selected;
+    }
+
+    /** * Obtém o *`value`* atributo do *`item`* atual. */
+    get value() {
+        return this.item.value || null;
+    }
+
+    /**
+     * * Obtém o conteúdo de texto do *`item`* atual.
+     */
+    get text() {
+        return this.item.textContent || null;
+    }
+
+    /**
+     * * Obtém os atributos do *`item`* atual.
+     */
+    get attrs() {
+        if (__.type(this.item) != "documentFragment" || this.item !== window) {
+            return this.item.attributes;
+        }
+
+        return null;
+    }
+
+    /**
+     * * Indica se o *`item`* atual está dentro da janela ao rolar.
+     */
+    get isOnView() {
+        if (__.type(this.item) !== "documentFragment" && this.item !== window) {
+            const pos = this.item.getBoundingClientRect();
+            return pos.top >= 0 && pos.bottom <= window.innerHeight
+                ? true
+                : false;
+        }
+
+        return null;
+    }
+
+    /**
+     * * Obtém uma lista de nomes da classe do *`item`* atual.
+     */
+    get classList() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : [...this.item.classList] || null;
+    }
+
+    /**
+     * * Obtém o nome de tag do *`item`* atual.
+     */
+    get tag() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : this.item.tagName.toLowerCase();
+
+    }
+
+
+    /**
+     * * Obtém o valor do *`id`* atributo do *`item`* atual.
+     */
+    get id() {
+        return this.item.id || null;
+    }
+
+    /**
+     * * Obtém uma lista de irmãos  do *`item`* atual, incluindo ele mesmo.
+     */
+    get family() {
+        return this.item.parentElement ? [...this.item.parentElement.children] : null;
+    }
+
+    /**
+     * * Obtém o índice do *`item atual`* na lista de elementos filhos em que ele estiver.
+     */
+    get index() {
+        return this.item.parentElement ? [...this.item.parentElement.children].indexOf(this.item) : null;
     }
 }
 
-class IsMethods {
-    /**
-     * @param {HTMLElement} item 
-     */
-    constructor(item) {
-        this.this = item
-        
-        this.adjacentTo = function (selector) { }
-        this.attrs = function (attributes, mode) { }
-        this.rightOf = function (selector) { }
-        this.leftOf = function (selector) { }
-        this.class = function (classNames, mode) { }
-        this.style = function (props, mode) { }
-        //Função que testa se um elemento é semelhante a outro
-        this.similarTo = function (selector) {}
-        
-        this.empty = function(selector, mode){} // Verifica se algum filho está vazio
-    }
-    
-    /**
-     * * Testa se o elemento é selecionável com um *`seletor CSS`* fornecido.
-     * ----
-     * @param {string} selector
-     * * Um seletor CSS para ser avaliado.
-     * ---
-     */
-    select(selector) {
-        __.err("is.select").to(selector, "string").done();
-        return this.this.matches(selector);
-    }
 
-    /**
-     * * Testa se o elemento é filho de outro elemento fornecido.
-     * ----
-     * @param {string | HTMLElement} selector
-     * * Um seletor CSS do elemento pai ou o próprio elemento como referência.
-     * ---
-     */
-    childOf(selector) {
-        __.err('is.childOf').to(selector, "string, HTMLElement").done()
-        if (__.type(selector) == 'string') {
-            selector = document.querySelector(selector)
-        }
-        return [...selector.children].includes(this.this)
-    }
-
-    /**
-     * * Testa se o elemento é pai de outro elemento fornecido.
-     * ----
-     * @param {string | HTMLElement} selector
-     * * Um seletor CSS de um elemento filho ou o próprio elemento como referência.
-     * ----
-     */
-    parentOf(selector) {
-        
-        __.err("is.parentOf").to(selector, "string, HTMLElement").done();
-        if (__.type(selector) == "string") {
-            selector = document.querySelector(selector);
-        }
-
-        while (selector) {
-            console.log(selector)
-            if (selector.parentElement === this.this) {
-                return true
-            }
-            
-            selector = selector.parentElement
-        }
-
-        return false
-        
-    }
-
-    /**
-     * * Testa o elemento possui um outro elemento dentro dele.
-     * -----
-     * @param {*} selector 
-     */
-    contains(selector) {
-        return this.this.querySelector(selector)? true : false
-    }
-}
 

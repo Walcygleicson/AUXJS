@@ -72,15 +72,19 @@ __.filterNodeList = function (list) {
 /**
  * Extrai elementos e os retona em um array
  * @param {elementRef} els Qualquer referência a um elemento
- * @param {errorRef} err Objecto que trata o erro da função principal
+ * @param {__.err} err Objecto que trata o erro da função principal
  * @param {number} param O parâmetro do erro
  */
 __.ex = function (els, err, param=1) {
     //Jogar string dentro de array
     __.type(els) == 'string' ? els = [els] : null
 
+    if (els === window) {
+        return [window]
+    }
+    
     x.type = __.type(els)
-
+    
 
     //Para elemento único
     if (els instanceof HTMLElement) {
@@ -105,9 +109,10 @@ __.ex = function (els, err, param=1) {
             //Obter elemento pelo seletor
             } else {
 
-
                 //Testar erro de DOMExeption seletor inválido
                 err.invalidSelector(() => {
+                    console.log(e)
+
                     x.temp = [...document.querySelectorAll(e)]  
                 }, e, param)
 
@@ -130,6 +135,64 @@ __.ex = function (els, err, param=1) {
         return [...new Set(els)]
     }
 
+}
+
+/**
+ * * Extrai os seletores válidos de um seletor *`selectorRegExp`* e os retornam em um array. Se não existir nenhum seletor do tipo o retorno é null.
+ * 
+ * @param {string} selector 
+ * @param {Array<HTMLElement>} root 
+ */
+__.selectorRegExp = function (selector) {
+    
+    if (this.type(selector) == 'string' && /\(\d+-\d+\)/g.test(selector)) {
+        let res = {
+            list: []
+        }
+        let x = {}
+
+        // Tratar múltiplos seletores separados por vírgula
+        if (selector.includes(",")) {
+            selector = selector.split(",")
+
+            selector.forEach((s) => {
+                res.min = null, res.max = null
+                s = s.trim()
+                x.range = s.match(/\d+-\d+/g)
+                if (x.range !== null) {
+                    x.range = x.range[0].split("-")
+                    res.min = Number(x.range[0])
+                    res.max = Number(x.range[1])
+
+                    for (let i = res.min; i <= res.max; i++) {
+                        res.list.push(s.replace(/\(.*\)/g, i));
+                    }
+                } else {
+                    res.list.push(s)
+                }
+                
+            })
+
+        } else {
+            x.range = selector.match(/\d+-\d+/g)
+            if (x.range !== null) {
+                x.range = x.range[0].split("-")
+                res.min = Number(x.range[0])
+                res.max = Number(x.range[1])
+
+                for (let i = res.min; i <= res.max; i++) {
+                    res.list.push(selector.replace(/\(.*\)/g, i));
+                }
+            }
+        }
+        
+        console.log(res.list)
+        x = null
+        return res.list
+
+    } else {
+        return null
+    }
 }
 
 /////////////////////////////////////////////////////
@@ -341,18 +404,17 @@ __.err = function (thisName) {
 
 
     /**
-     * * Lança um erro se uma função done() não for executada
-     * @param {boolean} done Se **true** o erro é lançado
-     * @param {number} param O parametro do erro
+     * * Lança um erro caso algum método que não manipula o objeto *`window`* seja invocado.
+     * 
+     * @param {Array<HTMLElement>} thisEls 
      */
-    fn.notDone = function (done = false, param = 1) {
+    fn.isWindow = function (thisEls) {
         try {
-            if (!done) {
+            if (thisEls[0] === window) {
                 ERR.mount({
-                    errMsg: 'notDone',
+                    errMsg: 'window',
                     errArg: arg,
-                    errName: 'Operação Esperada',
-                    errTarget: arg.list[param - 1]
+                    errName: 'Operação Inesperada',
                 })
             }
         } catch (err) {
@@ -464,18 +526,27 @@ __.indexRef = function (ref, list, getIndex = false) {
  */
 __.getElementsOfList = function (refs, list) {
     refs = this.arr(refs)
+    
     x.elements = []
     for (let i = 0; i < refs.length; i++){
         x.ref = refs[i]
+        
         switch (__.type(x.ref)) {
             case "number":
                 x.elements.push(list[x.ref])
                 break;
             case "string":
-                //Verificar se algum elemento da lista é selecionável com o seletor passado
-                x.elements.push(...list.filter((e) => {
-                    if (e.matches(x.ref)) {return e}
-                    }))
+                x.reg = this.selectorRegExp(x.ref)
+                if (x.reg) {
+                    ///// TERMINAR DEPOIS - VERIFICAR SE OS SELETORES EXTRAÍDOS EM selectorRegExp SELECIONAM OS ELEMENTO DA LISTA
+                } else {
+
+                    //Verificar se algum elemento da lista é selecionável com o seletor passado
+                    x.elements.push(...list.filter((e) => {
+                        
+                        if (e.matches(x.ref)) {return e}
+                        }))
+                }
                     
                 break;
             case "HTMLElement":
@@ -534,15 +605,16 @@ const ERR = {
      * @param {*} other Outros valores
      * @param {object} param0.errArg O objeto que armazena a quantidade de paraemtro e quantidade obrigatória de parametros
      */
-    mount({ errName, errMsg, errArg={}, errTarget, errValue, other}) {
+    mount({ errName, errMsg, errArg={}, errTarget={}, errValue, other}) {
         //Enviar mensagem de erro e detalhes por catch err param
-        x.joinTypes = errTarget.types.join(' | ')
-        x.joinSubTypes = errTarget.subTypes ? errTarget.subTypes.join(' | ') : null
+        x.hasErrTarget = Object.keys(errTarget).length  > 0 ? true : false
+        x.joinTypes = x.hasErrTarget? errTarget.types.join(' | ') : null
+        x.joinSubTypes = x.hasErrTarget && errTarget.subTypes ? errTarget.subTypes.join(' | ') : null
         throw new Error(
             JSON.stringify({
                 name: errName, //Nome do erro
                 fn: errArg.fn, //Nome da função
-                param: errTarget.param,
+                param: x.hasErrTarget? errTarget.param : null,
                 message: {// Corpo das mensagens de erro
 
                     //Erro de parametro obrigatorio
@@ -587,6 +659,9 @@ const ERR = {
                         }
                     })(),
 
+                    /// Widow
+                    window: `Não é possível executar esta ação no objeto "window"! Aponte para um elemento HTML ou tente outro método!`
+
                 }[errMsg],
             })
         );
@@ -599,10 +674,9 @@ const ERR = {
      */
     launch(err) {
         x.stack = err.stack.split("at").pop(); //Pegar ultima pilha
-    
         err = JSON.parse(err.message)
         //Cabeçalho do erro
-        x.headMsg = `ERROR! (${err.name})\n ▶ ${x.stack.split("/").pop()}\n ▶${x.stack}\n\n⚠️ ${err.fn}(Parâmetro ${err.param}):\n\n`;
+        x.headMsg = `ERROR! (${err.name})\n ▶ ${x.stack.split("/").pop()}\n ▶${x.stack}\n\n⚠️ ${err.fn}(${err.param? "Parâmetro " + err.param : ""}):\n\n`;
 
         //Lançar mensagem de erro montada
         throw x.headMsg + err.message + ".\n ";
