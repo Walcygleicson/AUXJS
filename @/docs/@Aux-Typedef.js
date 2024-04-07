@@ -1,14 +1,7 @@
 import"../internal/@interfaces.js"
-import { AUXProperties } from "../internal/@interfaces.js";
 import AUX from "../../module/Aux-Main.js";
 
 var aux = AUX("html")
-
-
-
-/**
- * @typedef {string} Selector Uma *String* que representa um seletor *CSS* válido que aponte para um ou mais elementos existentes no *DOM*.
- */
 
 //////////// CSSDisplayValue ///////////////////////////
 /**
@@ -289,7 +282,7 @@ var aux = AUX("html")
 
 /**
  * @callback HandlerFunction
- * @param {ItemGetters} resources
+ * @param {ItemGetters} get
  * * Objeto fornece propriedades somente leitura sobre o elemento, o alvo, e o estado da operação.
  * * Fornece uma propriedade *set* onde é possível aplicar todos os métodos *`AUX`* em cada *`item`*.
  * ----
@@ -298,8 +291,13 @@ var aux = AUX("html")
  * -----
  * 
  * @callback EventHandlerFunction
- * @param {AUXProperties} source
- * @param {PointerEvent | MouseEvent | KeyboardEvent} event
+ * @param {ItemGetters} get
+ * * Objeto fornece propriedades somente leitura sobre o elemento, o alvo, e o estado da operação.
+ * * Fornece uma propriedade *set* onde é possível aplicar todos os métodos *`AUX`* em cada *`item`*.
+ * @param {Event | PointerEvent | MouseEvent | KeyboardEvent} event
+ * * Fornece um *`Event`* interface.
+ * @param {number} index
+ * * Fornece o número de índice do *`item`* (*elemento*) atual na lista de itens da operação
  */
 /////////////// ARGUMENTOS DE CONTROLE ////////////////////
 /**

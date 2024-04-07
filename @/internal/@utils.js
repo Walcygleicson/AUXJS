@@ -68,11 +68,11 @@ __.filterNodeList = function (list) {
     }
 }
 ////////////////////////////////////////////
-
+/**@typedef {__.err} Err */
 /**
  * Extrai elementos e os retona em um array
  * @param {elementRef} els Qualquer referência a um elemento
- * @param {__.err} err Objecto que trata o erro da função principal
+ * @param {Err} err Objecto que trata o erro da função principal
  * @param {number} param O parâmetro do erro
  */
 __.ex = function (els, err, param=1) {
@@ -111,9 +111,8 @@ __.ex = function (els, err, param=1) {
 
                 //Testar erro de DOMExeption seletor inválido
                 err.invalidSelector(() => {
-                    console.log(e)
-
-                    x.temp = [...document.querySelectorAll(e)]  
+                    x.temp = [...document.querySelectorAll(e)]
+                    
                 }, e, param)
 
 
@@ -536,17 +535,13 @@ __.getElementsOfList = function (refs, list) {
                 x.elements.push(list[x.ref])
                 break;
             case "string":
-                x.reg = this.selectorRegExp(x.ref)
-                if (x.reg) {
-                    ///// TERMINAR DEPOIS - VERIFICAR SE OS SELETORES EXTRAÍDOS EM selectorRegExp SELECIONAM OS ELEMENTO DA LISTA
-                } else {
-
-                    //Verificar se algum elemento da lista é selecionável com o seletor passado
-                    x.elements.push(...list.filter((e) => {
-                        
-                        if (e.matches(x.ref)) {return e}
-                        }))
-                }
+                //x.reg = this.selectorRegExp(x.ref)
+               
+                //Verificar se algum elemento da lista é selecionável com o seletor passado
+                x.elements.push(...list.filter((e) => {
+                    
+                    if (e.matches(x.ref)) {return e}
+                    }))
                     
                 break;
             case "HTMLElement":
@@ -588,8 +583,6 @@ __.mapLoop = function (amount, handler) {
 __.capitalize = function (string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
 }
-
-
 
 //-----> Auxilar de __.err <----------
 const ERR = {
@@ -685,7 +678,5 @@ const ERR = {
 
    
 };
-
-
 
 export default __

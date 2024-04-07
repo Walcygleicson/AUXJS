@@ -1,39 +1,21 @@
 import AUX from "../../module/Aux-Main.js"
 import __ from "./@utils.js"
 
-export class AUXProperties {
-    
-    constructor({ item, i, root, rootList, itemList }) {
-        /** * Forncece propriedades somente leitura sobre o *`item`* atual. */
-        this.get = Object.freeze(new ItemGetters(item, itemList, i, root))
-        
-        /**
-         * * Fornece os métodos de manipulação *`AUX`* para *`item`* atual.
-         * ----
-         * @example
-         * item.style()
-         * item.on()...
-         * */
-        this.item = __.type(item) == 'documentFragment' ? Object.freeze(AUX(item.children)) : Object.freeze(AUX(item))
-       
-    }
-};
-
 /**
  * @typedef {ItemGetters} ItemGetters
  */
 export class ItemGetters {
-    constructor({ item, itemList, i, target, targetList }) {
+    constructor({ item, itemList, i, target, targetList, substitute }) {
         /**
          * * Obtém o elemento que está sendo operado na iteração atual.
          * @type {HTMLElement | window | DocumentFragment}
-        */
+         */
         this.item = item;
 
         /**
          * * Obtém o índice do *`item`* atual na lista de itens da operação.
          * > Nota: O índice fornecido não é o índice do *`item`* no DOM. Para obter a posição deste na árvore DOM acessar *`index`* propriedade.
-         * 
+         *
          * @type {number}
          */
         this.i = i;
@@ -41,16 +23,17 @@ export class ItemGetters {
         /**
          * * Fornece os métodos *`AUX`* para o *`item`* atual.
          */
-        this.set =
-            __.type(item) == "documentFragment"
+        this.set = item
+            ? __.type(item) == "documentFragment"
                 ? Object.freeze(AUX(item.children))
-                : Object.freeze(AUX(item));
-        
+                : Object.freeze(AUX(item))
+            : null;
+
         /**
          * * Obtém o *`elemento alvo`* da operação atual.
          * > * Nota: Se estiver operando sobre estes elementos o valor é *`null`* pois o elemento alvo passa a ser o *`item`*.
          * > * *`target`*, *`targetList`* e *`targetI`* só são obtidos quando estiver operando sobre outros elementos onde este é o alvo final, ou seja, quando a operação for sobre os filhos, pai, irmãos ou outros elementos externos onde este será o destino final da operação seja ela qual for.
-         * 
+         *
          * @type {HTMLElement | window | DocumentFragment}
          */
         this.target = target || null;
@@ -63,10 +46,10 @@ export class ItemGetters {
 
         /**
          * * Obtém o índice do *`elemento alvo`* da operação atual na lista de elementos alvos em que ele estiver.
-         * 
+         *
          * @type {number | null}
          */
-        this.targetI = target ? targetList[targetList.indexOf(target)] : null;
+        this.targetI = target ? targetList.indexOf(target) : null;
 
         /**
          * * Obtém a lista de itens do processo atual.
@@ -91,6 +74,14 @@ export class ItemGetters {
             __.type(item) == "documentFragment" || item === window
                 ? null
                 : itemList[itemList.indexOf(item) - 1] || null;
+        /**
+         * * Obtém um elemento que ocupou o lugar de *`item`* na lista de elementos filhos se uma operação de trocar ou substituir elementos foi feita.
+         * @type {HTMLElement | null}
+         */
+        this.substitute =
+            __.type(item) == "documentFragent" || item === window
+                ? null
+                : substitute || null;
     }
 
     /** * Obtém o objeto *`DOMRect`* do *`item`* atual. */
@@ -125,7 +116,6 @@ export class ItemGetters {
      * * Retorna o elemento pai no *`item`* atual.
      */
     get parent() {
-        console.log(this.item);
         return this.item.parentElement || null;
     }
 
@@ -242,9 +232,7 @@ export class ItemGetters {
         return __.type(this.item) == "documentFragment" || this.item === window
             ? null
             : this.item.tagName.toLowerCase();
-
     }
-
 
     /**
      * * Obtém o valor do *`id`* atributo do *`item`* atual.
@@ -257,14 +245,64 @@ export class ItemGetters {
      * * Obtém uma lista de irmãos  do *`item`* atual, incluindo ele mesmo.
      */
     get family() {
-        return this.item.parentElement ? [...this.item.parentElement.children] : null;
+        return this.item.parentElement
+            ? [...this.item.parentElement.children]
+            : null;
     }
 
     /**
      * * Obtém o índice do *`item atual`* na lista de elementos filhos em que ele estiver.
      */
     get index() {
-        return this.item.parentElement ? [...this.item.parentElement.children].indexOf(this.item) : null;
+        return this.item.parentElement
+            ? [...this.item.parentElement.children].indexOf(this.item)
+            : null;
+    }
+
+    /**
+     * * Obtém a quantidade de filhos que o *`item`* atual possui.
+     */
+    get childLength() {
+        return __.type(this.item) == "documentFragment" || this.item === window
+            ? null
+            : this.item.children.length;
+    }
+
+    /**
+     * * Obtém a quantidade de filhos que o elemento *`target`* atual possui.
+     */
+    get targetChildLength() {
+        return this.target ? this.target.children.length : null;
+    }
+
+    /**
+     * Indica se o *`item`* atual está com foco.
+     */
+    get focused() {
+        return this.item === document.activeElement;
+    }
+
+    /**
+     * * Obtém a lista de elementos diretamente filhos do *`item`*.
+     */
+    get childs() {
+        return this.item === window ? null : [...this.item.children];
+    }
+
+    /**
+     * * Obtém o primeiro elemento filho da lista de elementos filhos de *`item`*.
+     * @returns {HTMLElement}
+     */
+    get firstChild() {
+        return this.item === window ? null : this.item.firstElementChild;
+    }
+
+    /**
+     * * Obtém o último elemento filho da lista de elementos filhos de *`item`*.
+     * @returns {HTMLElement}
+     */
+    get lastChild() {
+        return this.item === window ? null : this.item.lastElementChild;
     }
 }
 

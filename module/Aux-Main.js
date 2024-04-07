@@ -1,5 +1,4 @@
 import __ from "../@/internal/@utils.js";
-import { AUXProperties as Res } from "../@/internal/@interfaces.js";
 import { ItemGetters } from "../@/internal/@interfaces.js";
 
 "use strict";
@@ -19,38 +18,12 @@ import { ItemGetters } from "../@/internal/@interfaces.js";
  * @typedef {import("../@/docs/@Aux-Typedef.js").SiblingKeys} SiblingKeys
  */
 
-function dom(elements) {
-    dom.toggleStyles = function (styleProps) {};
-
-    dom.createStyle = function (CSSRules) {};
-
-    dom.setCSS = function (selector, styleProps) {};
-
-    dom.toggleCSS = function (selector, styleProps) {};
-
-    dom.toggleChilds = function (childsA, childsB) {};
-    dom.toggle = function (elementB) {};
-    dom.replace = function (newElement) {};
-    dom.replaceChilds = function (newChilds, oldChilds) {};
-    dom.click = function () {};
-    dom.focus = function (options) {};
-
-    dom.toView = function () {};
-
-    dom.createAnim = function (animProps, mode) {};
-
-    dom.addAnim = function (animName, config) {};
-    dom.setVar = function (varName, value) {};
-    dom.removeVar = function (varName) {};
-    dom.toggleVar = function (varNameA, varNameB) {};
-    dom.mediaQuery = function (media, styleProps) {};
-}
 
 var AUX = (function () {
     const version = "1.0.0";
 
     const NUMB = 999999999;
-    
+
     /**Armazena tipos personalisados */
     const t = {
         /**"number, string, HTMLElement, null" */
@@ -132,7 +105,6 @@ var AUX = (function () {
         }
     };
 
-    
     //================ MÉTODOS PÚBLICOS ===========================================//
     ///
     ///
@@ -166,11 +138,14 @@ var AUX = (function () {
         //Tratar erros de argumento
         const error = __.err("AUX");
 
-        error.to(selectors, t.ELREF + ", window").isVoid(selectors, 1).done();
+        error
+            .to(selectors, t.ELREF + ", window")
+            .isVoid(selectors, 1)
+            .done();
 
         /** * Retorna um Array contento todos os elementos da lista de elementos obtidos por *`AUX`* @type {Array<HTMLElement>}*/
         this.targets = __.ex(selectors, error);
-        
+
         /** * Retorna a quantidade de elementos da lista obtida por *`AUX`*. @type {number}*/
         this.length = this.targets.length || null;
 
@@ -178,145 +153,10 @@ var AUX = (function () {
          * * Objeto de propriedades que retornam os valores de todas as propriedades CSS atualizadas de um elemento (o primeiro da lista de manipulação se existir mais de um).
          * @type {CSSStyleDeclaration | null}
          */
-        this.getStyle = selectors !== window? window.getComputedStyle(this.targets[0]) : null
-
-        /**
-         * * Objeto de métodos que inserem templates genéricos pré-montados sem estilos aplicados
-         *
-         */
-        this.insert = {
-            /**
-             * @typedef {object} TableOptions
-             * @property {HandlerFunction} handler Executa a função para cada resultado obtido.
-             * @property {number} rows Um número que indique a quantidade de linhas que a tebela deve possuir.
-             * @property {number} cols Um número que indique a quantidade de colunas que a tebela deve possuir.
-             * @property {PositionReference} position
-             * @property {number} amount
-            */
-            
-            /**
-             * * Cria uma tabela genérica sem estilos.
-             *
-             * @param {TableOptions | HandlerFunction} options
-             */
-            table(options = {}) {
-                options = {
-                    position: options.position ?? null,
-                    handler:
-                        __.type(options) == "function"
-                            ? options
-                            : options.handler,
-                    amount: options.amount ?? 1,
-                    rows: options.rows ?? 5,
-                    cols: options.cols ?? 5,
-                    defaultStyle: options.defaultStyle ?? true,
-                };
-
-                to((root) => {
-                    x.childList = [...root.children];
-                    x.nodeRef = __.indexRef(options.position, x.childList);
-                    x.th = __.mapLoop(
-                        options.cols,
-                        (n) => `<th>Title ${n}</th>`
-                    ).join("");
-                    x.cols = __.mapLoop(options.cols, () => "<td></td>").join(
-                        ""
-                    );
-                    x.rows = __.mapLoop(
-                        options.rows,
-                        () => `<tr>${x.cols}</tr>`
-                    ).join("");
-                    for (let i = 0; i < options.amount; i++) {
-                        x.table = __.strHTML(`
-                    <table class="aux-table">
-                        <caption>Table Title Here!</caption>
-                        <thead>
-                            <tr>
-                                ${x.th}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${x.rows}
-                        </tbody>
-                    </table>
-                    `);
-
-                        root.insertBefore(x.table, x.nodeRef);
-
-                        if (options.handler) {
-                            options.handler(x.table);
-                        }
-                    }
-                }, thisObj.targets);
-                clear(x);
-                return thisObj.insert;
-            },
-
-            /**
-             * * Cria formulários genéricos e os inserem no elemento.
-             * * Opcionalmente executa uma função *`callback`* para cada formulário criado onde se pode polir melhor a estrutura base.
-             * ------
-             * @param {object} inputTypes
-             * * Um objeto de propriedades que definem o label e o tipo dos campos *`input`*. O nome dado à propriedade deve ser um título *`label`* enquanto seu valor deve ser o tipo do input.
-             * -----
-             * @param {{amount: number, position: PositionReference, handler: HandlerFunction} | HandlerFunction} options
-             */
-            form(inputTypes, options = {}) {
-                options = {
-                    position: options.position ?? null,
-                    handler: __.type(options) == "function" ? options : options.handler,
-                    amount: options.amount ?? 1,
-                };
-                let x = {}
-
-                to((root) => {
-                    x.childList = [...root.children];
-                    x.nodeRef = __.indexRef(options.position, x.childList);
-                    for (let i = 0; i < options.amount; i++) {
-                        x.form = __.strHTML(
-                            `
-                        <form action="" class="aux-form">
-                            <h1 class="form-title">Title Here</h1>
-                            <p class="form-description">Lorem ipsum, dolor sit amet consectetur adipisicing elit.</p>
-                            <div class="input-container">
-                                ${Object.keys(inputTypes)
-                                    .map((name) => {
-                                        return `
-                                    <div class="${name}-container">
-                                        <label for="${name}">${__.capitalize(
-                                            name
-                                        )}</label>
-                                        <input type="${
-                                            inputTypes[name]
-                                        }" id="${name}" name="${name}" required>
-                                        <p class="warn-msg"><!-- Mostrar mensagem de aviso --></p>
-                                    </div>`;
-                                    })
-                                    .join("")}
-                                    
-                                
-                                <div class="checkbox-container">
-                                    <input type="checkbox" name="remember-pass" id="remember-pass">
-                                    <label for="remember-pass">Remember password?</label>
-                                </div>
-                            </div>
-                            <button type="submit" class="submit-btn">Submit</button>
-                        </form>
-                        `
-                        ).querySelector(".aux-form");
-
-                        root.insertBefore(x.form, x.nodeRef);
-
-                        if (options.handler) {
-                            options.handler(x.form);
-                        }
-                    }
-                }, thisObj.targets);
-
-                x = null
-                return thisObj.insert;
-            }
-        };
+        this.getStyle =
+            selectors !== window
+                ? window.getComputedStyle(this.targets[0])
+                : null;
 
         /** * Fornece métodos que adiciona ou remove elementos da lista de manipulação principal. */
         this.list = {
@@ -380,6 +220,53 @@ var AUX = (function () {
                 return thisObj;
             },
         };
+
+        /**
+         * * Objeto fornece propriedades somente leitura sobre aspectos do elemento *`alvo`*.
+         */
+        this.is = Object.freeze({
+            /**
+             * * Indica se o elemento está em foco.
+             */
+            get focused() {
+                for (let i = 0; i < thisObj.targets.length; i++) {
+                    if (thisObj.targets[i] === document.activeElement) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+
+            /**
+             * * Indica se o elemento está visível na tela, levando em consideração sua *`visibilidade`*, *`opacidade`* e *`display`*.
+             */
+            get visible() {
+                for (let i = 0; i < thisObj.targets.length; i++) {
+                    if (
+                        thisObj.targets[0] !== window &&
+                        thisObj.targets[i].checkVisibility({
+                            checkOpacity: true,
+                            checkVisibilityCSS: true,
+                        })
+                    ) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+
+            get checked() {
+                for (let i = 0; i < thisObj.targets.length; i++) {
+                    if (thisObj.targets[i].checked) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+        });
     };
 
     /**Objeto de propriedades que imprimem no console informações sobre a biblioteca.*/
@@ -431,7 +318,7 @@ var AUX = (function () {
      * .text("Click-Me") => <button>Click-me</button>
      */
     AUX.prototype.text = function (text = "") {
-        __.err("AUX.text").isWindow(this.targets).done()
+        __.err("AUX.text").isWindow(this.targets).done();
         to((root) => {
             root.textContent = text;
         }, this.targets);
@@ -450,7 +337,7 @@ var AUX = (function () {
      * .html("<button>Click</button>") => <div><button>Click</button></div>
      */
     AUX.prototype.html = function (stringHTML = "") {
-         __.err("AUX.html").isWindow(this.targets).done();
+        __.err("AUX.html").isWindow(this.targets).done();
         to((root) => {
             root.innerHTML = stringHTML;
         }, this.targets);
@@ -526,7 +413,11 @@ var AUX = (function () {
             ? (console.group("elementList (Array):"),
               console.log(this.targets),
               console.log(...this.targets))
-            : (console.group(this.targets[0] !== window? this.targets[0].tagName + " Element:" : "Window Object"),
+            : (console.group(
+                  this.targets[0] !== window
+                      ? this.targets[0].tagName + " Element:"
+                      : "Window Object"
+              ),
               console.log(...this.targets));
         console.groupEnd();
 
@@ -564,7 +455,7 @@ var AUX = (function () {
         //Separar nomes de classe por vírgula se passado uma string
         classNames = __.arr(classNames, true);
 
-        let classList
+        let classList;
         to((e) => {
             classList = [...e.classList];
 
@@ -576,7 +467,7 @@ var AUX = (function () {
             e.setAttribute("class", classList);
         }, this.targets);
 
-        classList = null
+        classList = null;
         return this;
     };
 
@@ -639,11 +530,11 @@ var AUX = (function () {
      * ---
      * @example
      * .appendHTML("<button>OK</button>")
-     * .appendHTML("<button>OK</button>", function({item, get, is}{...}))
+     * .appendHTML("<button>OK</button>", function(get, i){...})
      * .appendHTML("<button>OK</button>", {amount: 2, position: 0})
      * .appendHTML("<button>OK</button>", {
      *      position: 0,
-     *      handler({item, get, is}){...}
+     *      handler(get, i){...}
      * })
      */
     AUX.prototype.appendHTML = function (HTMLString, options = {}) {
@@ -668,8 +559,8 @@ var AUX = (function () {
             position: options.position ?? null,
         };
 
-        let x = {}
-        let cb
+        let x = {};
+        let cb;
         to((root) => {
             x.childList = [...root.children];
 
@@ -687,8 +578,8 @@ var AUX = (function () {
                         item: options.fragment,
                         itemList: [...x.htmlText.children],
                         target: root,
-                        targetList: this.targets
-                    })
+                        targetList: this.targets,
+                    });
                     options.handler(cb, i);
                 }
 
@@ -698,8 +589,7 @@ var AUX = (function () {
             }
         }, this.targets);
 
-    
-        err = null, x = null, cb = null;
+        (err = null), (x = null), (cb = null);
         return this;
     };
 
@@ -722,23 +612,10 @@ var AUX = (function () {
      * > * **`position:`** Uma referência que indique a posição em que o elemento obtido será inserido na lista de nós filhos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento da lista de nós filhos ou o próprio elemento como referência.
      *------
      * @example
-     * // Insere diretamente ao final da lista de nós filhos
      * .appendChilds("#div")
-     *
-     * // Insere na posição 0 (início) da lista de nós filhos
      * .appendChilds("#div", {position: 0})
-     *
-     * // Executa uma função para o elemento. Espera a execução de done() para ser inserido
-     * .appendChilds("#div", {position: 0, handler({get, def}, done){
-     *      // Seu código
-     *      done()
-     * }})
-     *
-     * // Executa uma função, mas sem o uso das options
-     * .appendChilds("#div", ({get, def}, done)=>{
-     *      //Seu código
-     *      done()
-     * })
+     * .appendChilds("#div", {position: 0, handler(get, i){...}})
+     * .appendChilds("#div", function(get, i){...})
      */
     AUX.prototype.appendChilds = function (selectors, options = {}) {
         let err = __.err("AUX.appendChilds");
@@ -757,7 +634,7 @@ var AUX = (function () {
             .done();
 
         selectors = __.ex(selectors, err);
-        let x = {}
+        let x = {};
 
         x.root = this.targets[0];
         x.childList = [...x.root.children];
@@ -768,8 +645,8 @@ var AUX = (function () {
         };
 
         if (options.handler) {
-            var cb
-        } 
+            var cb;
+        }
 
         // Para cada filho a ser inserido...
         selectors.forEach((child, i) => {
@@ -780,8 +657,8 @@ var AUX = (function () {
                     item: child,
                     itemList: selectors,
                     target: x.root,
-                    targetList: this.targets
-                })
+                    targetList: this.targets,
+                });
                 options.handler(cb, i);
             }
             //Obter o elemento filho referência para o insertBefore
@@ -789,8 +666,7 @@ var AUX = (function () {
             this.targets[0].insertBefore(child, x.nodeRef);
         });
 
-        
-        err = null, x = null, cb = null;
+        (err = null), (x = null), (cb = null);
         return this;
     };
 
@@ -812,7 +688,7 @@ var AUX = (function () {
      * .removeChilds(".div") => Remove filhos pelo seletor CSS.
      * .removeChilds(1) => Remove filho pelo índice.
      * .removeChilds([1,2,6]) => Remove múltiplos filhos pelos índices.
-     * .removeChilds(".div", function({item, get, is}){...}) => Executa uma função para o filho removido.
+     * .removeChilds(".div", function(get, i){...}) => Executa uma função para o filho removido.
      */
     AUX.prototype.removeChilds = function (childs, handler = Function) {
         __.err("AUX.removeChilds")
@@ -839,7 +715,8 @@ var AUX = (function () {
                             itemList: e.list,
                             target: root,
                             targetList: this.targets,
-                        }), i
+                        }),
+                        i
                     );
                 }
             }
@@ -875,7 +752,7 @@ var AUX = (function () {
      *
      * .replaceChilds(".old-childs", ".new-childs")
      *
-     * .replaceChilds(1, "#foo", function({item, get, is}){...})
+     * .replaceChilds(1, "#foo", function(get, i){...})
      */
     AUX.prototype.replaceChilds = function (
         oldChilds,
@@ -885,13 +762,14 @@ var AUX = (function () {
         let err = __.err("AUX.replaceChilds");
         err.to(oldChilds, t.ELREF + ", number")
             .isVoid(oldChilds)
+            .isWindow(this.targets)
             .to(newChilds, t.ELREF)
             .isVoid(newChilds, 2)
             .to(handler, "function", false)
             .done();
 
         let x = {};
-        x.root = this.elements[0];
+        x.root = this.targets[0];
 
         oldChilds = __.getElementsOfList(oldChilds, [...x.root.children]);
         newChilds = __.ex(newChilds, err, 2);
@@ -904,19 +782,18 @@ var AUX = (function () {
                 //Exeutar função callback
                 if (handler !== Function) {
                     handler(
-                        new Res({
+                        new ItemGetters({
                             i: i,
                             item: x.old,
                             itemList: oldChilds,
-                            root: x.root,
-                            rootList: this.elements,
-                        })
+                            target: x.root,
+                            targetList: this.targets,
+                            substitute: x.new,
+                        }),
+                        i
                     );
                 }
                 x.root.replaceChild(x.new, x.old);
-            } else {
-                //Adicionar filho que sobrar ao final da lista de nós filhos
-                x.root.appendChild(x.new);
             }
         }
         (err = null), (x = null);
@@ -945,10 +822,11 @@ var AUX = (function () {
     AUX.prototype.exchangeChilds = function (childs, substitutes) {
         let err = __.err("AUX.exchangeChilds");
         err.to(childs, t.ELREF + ", number")
+            .isWindow(this.targets)
             .to(substitutes, t.ELREF)
             .done();
         let x = {};
-        x.root = this.elements[0];
+        x.root = this.targets[0];
 
         childs = __.getElementsOfList(childs, [...x.root.children]);
         substitutes = __.ex(substitutes, err, 2);
@@ -1054,16 +932,17 @@ var AUX = (function () {
      * -----
      * @example
      * // Cria um filho input e o insere o final da lista de nós filhos.
-     * .createChilds("input", function({item, get, is}){...})
+     * .createChilds("input", function(get, i){...})
      *
      * // Cria 3 filhos input e os insere na posição 0 (início) da lista de nós filhos.
-     * .createChilds("input", function({item, get, is}){
+     * .createChilds("input", function(get, i){
      *      //...
      * }, {amount: 3, position: 0})
      *
      */
     AUX.prototype.createChilds = function (tagName, handler, options = {}) {
         __.err("AUX.createChilds")
+            .isWindow(this.targets)
             .to(tagName, "string")
             .to(handler, "function")
             .to(options, "object", false)
@@ -1084,20 +963,46 @@ var AUX = (function () {
                 //Obter o elemento filho referência para o insertBefore
                 x.nodeRef = __.indexRef(options.position, x.childList);
                 handler(
-                    new Res({
+                    new ItemGetters({
                         item: x.created,
                         i: i,
                         itemList: [x.created],
-                        root: root,
-                        rootList: this.elements,
-                    })
+                        target: root,
+                        targetList: this.targets,
+                    }),
+                    i
                 );
                 root.insertBefore(x.created, x.nodeRef);
             }
-        }, this.elements);
+        }, this.targets);
 
         x = null;
         return this;
+    };
+
+    ////////// .toggleChilds /////////////
+    AUX.prototype.toggleChilds = function (childElements, elements) {
+        let err = __.err("AUX.toggleChilds");
+        err.to(childElements, "HTMLElement, array, nodeList, HTMLCollection")
+            .to(elements, "HTMLElement, array, nodeList, HTMLCollection")
+            .done();
+
+        let x = {
+            root: this.targets[0],
+        };
+        childElements = __.ex(childElements, err);
+
+        elements = __.ex(elements, err, 2);
+
+        to((child, i) => {
+            if (elements[i]) {
+                if (x.root.contains(elements[i])) {
+                    x.root.replaceChild(child, elements[i]);
+                } else if (x.root.contains(child)) {
+                    x.root.replaceChild(elements[i], child);
+                }
+            }
+        }, childElements);
     };
 
     //////////////// .for ////////////////////
@@ -1109,20 +1014,22 @@ var AUX = (function () {
      * -----
      * @example
      *
-     * .for(function({item, get, is}){...})
+     * .for(function(get, i){...})
      */
     AUX.prototype.for = function (handler) {
         __.err("AUX.for").to(handler, "function").done();
-        let cb
+
         for (let i = 0; i < this.targets.length; i++) {
-            cb = new ItemGetters({
+            handler(
+                new ItemGetters({
                     i: i,
                     item: this.targets[i],
                     itemList: this.targets,
-                })
-            handler(cb);
+                }),
+                i
+            );
         }
-        cb = null
+
         return this;
     };
 
@@ -1145,6 +1052,7 @@ var AUX = (function () {
      */
     AUX.prototype.toggleClass = function (namesA, namesB = null) {
         __.err("AUX.toggleClass")
+            .isWindow(this.targets)
             .to(namesA, t.CLASSLIST)
             .isVoid(namesA)
             .to(namesB, "string, array, object, null", false)
@@ -1153,7 +1061,7 @@ var AUX = (function () {
 
         namesA = __.arr(namesA, true);
         namesB = namesB === null ? null : __.arr(namesB, true);
-        let has
+        let has;
         to((root) => {
             //Função temporária
             //Verifica se o nome de classe ou um dos nomes de classe passados já existem no elemento alvo e retorna true.
@@ -1187,9 +1095,9 @@ var AUX = (function () {
                     root.classList.add(...namesB);
                 }
             }
-        }, this.elements);
+        }, this.targets);
 
-        has = null
+        has = null;
         return this;
     };
 
@@ -1203,9 +1111,14 @@ var AUX = (function () {
      * @param {string|Array<string>} newNames
      * * Um ou mais nomes de classe para serem adicionados. Uma *`string`* que representa um nome de classe ou múltiplos nomes de classe separados por vírgula. Ou um *`array`* contento os nomes de classe.
      * ----
+     * @example
+     * .replaceClass("foo", "bar")
+     * .replaceClass("foo, test", "bar, wow")
+     * .replaceClass(["foo", "test"], ["bar", "wow"])
      */
     AUX.prototype.replaceClass = function (oldNames, newNames) {
         __.err("AUX.replaceClass")
+            .isWindow(this.targets)
             .to(oldNames, t.CLASSLIST)
             .isVoid(oldNames)
             .to(newNames, t.CLASSLIST)
@@ -1218,7 +1131,7 @@ var AUX = (function () {
         to((root) => {
             root.classList.remove(...oldNames);
             root.classList.add(...newNames);
-        }, this.elements);
+        }, this.targets);
 
         return this;
     };
@@ -1230,13 +1143,22 @@ var AUX = (function () {
      * @param {string|Array<string>} names
      * * Uma *`string`* que representa um nome de classe ou múltiplos nomes de classe separados por vírgula. Ou um *`array`* contento os nomes de classe.
      * -----
+     *
+     * @example
+     * .removeClass("foo")
+     * .removeClass("foo, bar")
+     * .removeClass(["foo", "bar"])
      */
     AUX.prototype.removeClass = function (names) {
-        __.err("AUX.removeClass").to(names, t.CLASSLIST).isVoid(names).done();
+        __.err("AUX.removeClass")
+            .isWindow(this.targets)
+            .to(names, t.CLASSLIST)
+            .isVoid(names)
+            .done();
 
         to((root) => {
             root.classList.remove(...__.arr(names, true));
-        }, this.elements);
+        }, this.targets);
 
         return this;
     };
@@ -1250,22 +1172,28 @@ var AUX = (function () {
      * * Recebe um parâmetro que deve ser desestruturado para obter de forma mais limpa as propriedades de manipulação desejadas.
      * -----
      * @example
-     * .forChilds(({item, get, i, is})=>{...})
+     * .childs(function(get, i){...})
      */
     AUX.prototype.childs = function (handler) {
-        __.err("AUX.childs").isWindow(this.elements).to(handler, "function").done();
+        __.err("AUX.childs")
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .done();
 
         to((root) => {
             for (let i = 0; i < root.children.length; i++) {
-                handler(new Res({
-                    i: i,
-                    item: root.children[i],
-                    itemList: [...root.children],
-                    root: root,
-                    rootList: this.elements
-                }));
+                handler(
+                    new ItemGetters({
+                        i: i,
+                        item: root.children[i],
+                        itemList: [...root.children],
+                        target: root,
+                        targetList: this.targets,
+                    }),
+                    i
+                );
             }
-        }, this.elements);
+        }, this.targets);
 
         return this;
     };
@@ -1273,6 +1201,7 @@ var AUX = (function () {
     ////////////////// .search //////////////
     /**
      * * Busca por elementos filhos da árvore de nós filhos em qualquer profundidade ( a partir do nó pai ) e executa uma função *`callback`* para cada resultado.
+     * * Se nenhum elemento filho for encontrado o resultado obtido é *`null`*.
      * ------
      * @param {string|Array<string>} childSelector
      * * Um seletor CSS válido que aponte para algum elemento filho na árvore de descendentes ou múltiplos seletores separados por vírgula. Um *`Array`* ou *`Object`* contendo seletores.
@@ -1282,28 +1211,32 @@ var AUX = (function () {
      * -----
      * @example
      * //Buscar por todos os elementos div class="box" existentes dentro do nó pai.
-     * .search("div.box", function({item, get, is}){...})
+     * .search("div.box", function(get, i){...})
      */
     AUX.prototype.search = function (childSelector, handler) {
         __.err("AUX.search")
+            .isWindow(this.targets)
             .to(childSelector, "string, array, object")
             .to(handler, "function")
             .done();
-        let res
+        let res;
         to((root) => {
-            res = [...root.querySelectorAll(childSelector)]
+            res = [...root.querySelectorAll(childSelector)];
+            res.length <= 0 ? (res = [null]) : null;
             for (let i = 0; i < res.length; i++) {
-                handler(new Res({
-                    i: i,
-                    item: res[i],
-                    itemList: res,
-                    root: root,
-                    rootList: this.elements
-                }));
+                handler(
+                    new ItemGetters({
+                        i: i,
+                        item: res[i],
+                        itemList: res,
+                        target: root,
+                        targetList: this.targets,
+                    })
+                );
             }
-        }, this.elements);
+        }, this.targets);
 
-        res = null
+        res = null;
         return this;
     };
 
@@ -1334,18 +1267,16 @@ var AUX = (function () {
      */
     AUX.prototype.toggleDisplay = function (valueA = "block", valueB = "none") {
         __.err("AUX.toggleDisplay")
+            .isWindow(this.targets)
             .to(valueA, "string", false)
             .to(valueB, "string", false)
             .done();
-        
-        let display
+
+        let display;
         to((root) => {
             display = window.getComputedStyle(root).display;
             // Se o elemento não possui uma propriedade display atribuida inline ou se possui mas não sao nenhum dos valores padrões, verificar visibilidade para alteranar valores
-            if (
-                display == "" ||
-                (display != valueA && display != valueB)
-            ) {
+            if (display == "" || (display != valueA && display != valueB)) {
                 if (root.checkVisibility()) {
                     root.style.display = valueB;
                 } else {
@@ -1356,9 +1287,9 @@ var AUX = (function () {
             } else if (display == valueB) {
                 root.style.display = valueA;
             }
-        }, this.elements);
+        }, this.targets);
 
-        display = null
+        display = null;
         return this;
     };
 
@@ -1375,11 +1306,14 @@ var AUX = (function () {
      * * Executa uma função para os objetos de valores obtido dos formulários.
      * ------
      * @example
-     * .forms(function({form, details}){...})
+     * .forms(function(form, details){...})
      */
     AUX.prototype.forms = function (handler) {
-        __.err("AUX.forms").to(handler, "function").done();
-        let x = {}
+        __.err("AUX.forms")
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .done();
+        let x = {};
         to((root) => {
             x.inputList = root.querySelectorAll("*[name]");
             x.form = {};
@@ -1422,9 +1356,9 @@ var AUX = (function () {
                 });
                 handler(x.form, x.details);
             }
-        }, this.elements);
+        }, this.targets);
 
-        x = null
+        x = null;
         return this;
     };
 
@@ -1456,15 +1390,16 @@ var AUX = (function () {
      * .cloneTo(".container", {amount: 3, position: 0})
      *
      * // Pode executar um método para cada clone gerado
-     * .cloneTo(".container", {amount: 3, handler({item, get, is}){...}})
+     * .cloneTo(".container", {amount: 3, handler(get, i){...}})
      *
      * // Apenas executa uma função para cada clone gerado.
-     * .cloneTo(".container", function({item, get, is}){...})
+     * .cloneTo(".container", function(get, i){...})
      *
      */
     AUX.prototype.cloneTo = function (targets, options = {}) {
         let err = __.err(".cloneTo");
         err.to(targets, t.ELREF)
+            .isWindow(this.targets)
             .to(options, "function, object", false)
             .expectObj(
                 options,
@@ -1482,42 +1417,46 @@ var AUX = (function () {
             handler: __.type(options) == "function" ? options : options.handler,
             amount: options.amount ?? 1,
         };
-        let x = {clones: []}
+        let x = { clones: [] };
 
         targets = __.ex(targets, err);
-        
 
-        //Gerar clones
-        to((root) => {
-            x.clones.push(
-                ...__.mapLoop(options.amount, () => { return root.cloneNode(true) })
-            );
-        }, this.elements);
-
-       
-        //Inserir clones no alvos.
+        //Inserir clones
         to((target) => {
+            x.clones = [];
+            //Gerar clones do alvo
+            to((root) => {
+                x.clones.push(
+                    ...__.mapLoop(options.amount, () => {
+                        return root.cloneNode(true);
+                    })
+                );
+            }, this.targets);
+
             x.childList = [...target.children];
             x.nodeRef = __.indexRef(options.position, x.childList);
             // Para cada destino
             for (let i = 0; i < x.clones.length; i++) {
                 x.clone = x.clones[i];
-                
+
                 target.insertBefore(x.clone, x.nodeRef);
 
                 if (options.handler) {
-                    options.handler(new Res({
-                        i: i,
-                        item: x.clone,
-                        itemList: x.clones,
-                        root: target,
-                        rootList: targets
-                    }));
+                    options.handler(
+                        new ItemGetters({
+                            i: i,
+                            item: x.clone,
+                            itemList: x.clones,
+                            target: target,
+                            targetList: targets,
+                        }),
+                        i
+                    );
                 }
             }
         }, targets);
 
-        err = null, x = null;
+        (err = null), (x = null);
         return this;
     };
 
@@ -1546,14 +1485,15 @@ var AUX = (function () {
      * .insertTo(".contaainer", {position: 0})
      *
      * //Executa um método para cada elemento.
-     * .insertTo(".container", {position: 0, handler({item, get, def}){}})
+     * .insertTo(".container", {position: 0, handler(get, i}){...}})
      *
      * //Executa uma função para cada elemento.
-     * .insertTo(".container", function({item, get, def}){})
+     * .insertTo(".container", function(get, i){...})
      */
     AUX.prototype.insertTo = function (target, options = {}) {
         let err = __.err("AUX.insertTo");
         err.to(target, "string, HTMLElement")
+            .isWindow(this.targets)
             .to(options, "object, function", false)
             .expectObj(options, { position: t.IDXREF, handler: "function" }, 2)
             .done();
@@ -1564,25 +1504,27 @@ var AUX = (function () {
             handler: __.type(options) == "function" ? options : options.handler,
         };
 
-        let x = {}
+        let x = {};
 
         x.childList = [...target.children];
         x.nodeRef = __.indexRef(options.position, x.childList);
         to((root, i) => {
-            
             if (options.handler) {
-                options.handler(new Res({
-                    i: i,
-                    item: root,
-                    itemList: this.elements,
-                    root: target,
-                    rootList: [target]
-                }));
+                options.handler(
+                    new ItemGetters({
+                        i: i,
+                        item: root,
+                        itemList: this.targets,
+                        target: target,
+                        targetList: [target],
+                    }),
+                    i
+                );
             }
             target.insertBefore(root, x.nodeRef);
-        }, this.elements);
+        }, this.targets);
 
-        err = null, x = null;
+        (err = null), (x = null);
         return this;
     };
 
@@ -1592,34 +1534,41 @@ var AUX = (function () {
      * * Opcionalmente executa uma função *`callback`* para o elemento que foi substituído (removido).
      * ----
      * @param {ElementSelector} substitutes
-     * @param {*} handler
-     * 
+     * * Um elemento HTML a substituir o elemento *`alvo`* atual.
+     * ----
+     * @param {HandlerFunction} handler
+     * *`(opcional)`*
+     * * Uma função para o elemento substituído.
+     * -----
      * @example
      * .replace(".div")
      * .replace(".div", function(get, i){...})
      */
-    AUX.prototype.replace = function (substitutes, handler=Function) {
+    AUX.prototype.replace = function (substitutes, handler = Function) {
         let err = __.err("AUX.replace");
-        err.to(substitutes, t.ELREF).done()
-        substitutes = __.ex(substitutes, err)
-        let cb
+        err.to(substitutes, t.ELREF).isWindow(this.targets).done();
+        substitutes = __.ex(substitutes, err);
+
         to((root, i) => {
             if (root.parentElement) {
                 root.parentElement.replaceChild(substitutes[i], root);
                 if (handler !== Function) {
-                    cb = new ItemGetters({
-                        i: i,
-                        item: root,
-                        itemList: this.elements,
-                    })
-                    handler(cb)
+                    handler(
+                        new ItemGetters({
+                            i: i,
+                            item: root,
+                            itemList: this.targets,
+                            substitute: substitutes[i],
+                        }),
+                        i
+                    );
                 }
             }
-        }, this.elements)
+        }, this.targets);
 
-        err = null, cb = null
-        return this
-    }
+        err = null;
+        return this;
+    };
 
     //////////////// .remove ///////////////////
     /**
@@ -1627,44 +1576,94 @@ var AUX = (function () {
      * * Opcionalmente executa uma função *`callback`* para o elemento removido.
      * * Se desejar remover o elemento do seu pai atual para o inserir em outro pai recomenda-se *`AUX.insertTo()`* ao invés deste.
      * -----
-     * @param {HandlerFunction} handler 
+     * @param {HandlerFunction} handler
      * * Uma função para o elemento removido.
      * ----
      * @example
-     * 
+     *
      * .remove()
      * .remove(function(get, i){...})
      */
-    AUX.prototype.remove = function (handler=Function) {
+    AUX.prototype.remove = function (handler = Function) {
         __.err("AUX.remove")
-            .isWindow(this.elements)
-            .to(handler, "function").done()
-        let cb
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .done();
+
         to((root, i) => {
             if (root.parentElement) {
-                cb = new ItemGetters({
-                    i: i,
-                    item: root,
-                    itemList: this.elements,
-                })
-
                 if (handler !== Function) {
-                    handler(cb)
+                    handler(
+                        new ItemGetters({
+                            i: i,
+                            item: root,
+                            itemList: this.targets,
+                        }),
+                        i
+                    );
                 }
 
-                root.remove()
-                
+                root.remove();
             }
-        }, this.elements)
+        }, this.targets);
 
-        cb = null
-        return this
-    }
+        return this;
+    };
 
     ///////////// .exchange //////////////////
-    AUX.prototype.exchange = function (substitutes){}
-   
-   
+    /**
+     * * Troca os elementos por outros elementos passados. Os elementos que foram substituídos tomam os lugares deixados pelos substitutos, fazendo uma troca equivalente sem deixar espaços vazios.
+     * > * **Nota:** O elemento substituto obrigatoriamente precisa ter um pai para a troca ser possível. Caso um elemento sem pai seja passado este será ignorado e nada acontecerá.
+     * > * **Nota:** A quantidade de elementos a serem trocados precisam ser iguais, caso sobre elementos para a troca este será ignorado. Se, por exemplo, três elementos foram selecionados para serem trocados, logo três elementos substitutos devem se passodos.
+     *----
+     * @param {ElementSelector} substitutes
+     * * O elemento ou referência ao elemento que trocará de lugar com o elemento principal.
+     * ----
+     * @example
+     * .exchange("#foo")
+     * .exchange("#foo, #bar")
+     * .exchange(["#foo", "#bar"])
+     * .exchange(HTMLElement)
+     */
+    AUX.prototype.exchange = function (substitutes) {
+        let err = __.err("AUX.exchange");
+        err.to(substitutes, t.ELREF).done();
+        substitutes = __.ex(substitutes, err);
+        let x = {};
+
+        to((root, i) => {
+            x.parent = root.parentElement;
+            x.substParent = substitutes[i]
+                ? substitutes[i].parentElement
+                : null;
+
+            if (x.substParent && x.parent) {
+                x.mask = document.createComment(" aux-mask");
+                x.substParent.replaceChild(x.mask, substitutes[i]);
+                x.parent.replaceChild(substitutes[i], root);
+                x.substParent.replaceChild(root, x.mask);
+            }
+        }, this.targets);
+
+        (err = null), (x = null);
+        return this;
+    };
+
+    ///////////// .appendSiblings //////////////////
+    AUX.prototype.appendSiblings = function (newSiblings, options = {}) {};
+
+    ///////////// .removeSiblings //////////////////
+    AUX.prototype.removeSiblings = function (siblings, handler = Function) {};
+
+    ///////////// .replaceSiblings ////////////////
+    AUX.prototype.replaceSiblings = function (
+        oldSiblings,
+        newSiblings,
+        handler = Function
+    ) {};
+
+    /////////// .toggleSiblings ////////////////
+    AUX.prototype.toggleSiblings = function (siblings, element) {};
 
     //////////////// .on ////////////////////
     /**
@@ -1696,10 +1695,10 @@ var AUX = (function () {
      * * Nota: Consultar documentação de *`.addEventListener`* parâmetro *`options`* para entender melhor o uso.
      * ---
      * @example
-     * .on("click", function ({get, def}, evt){...})
-     * .on("click", function ({get, def}, evt){...}, {times: 3}) // Dispara o evento somente 3 vezes.
+     * .on("click", function (get, event, i){...})
+     * .on("click", function (get, event, i){...}, {times: 3}) // Dispara o evento somente 3 vezes.
      *
-     * const myHandler = function({get, def}, evt){...}
+     * const myHandler = function(get, event, i){...}
      * .on("click", myHanlder, {removeStack: true}) // Adiciona o ouvinta em uma pilha de espera de remoção.
      */
     AUX.prototype.on = function (type, handler, options = {}) {
@@ -1708,14 +1707,14 @@ var AUX = (function () {
             .to(handler, "function")
             .to(options, "boolean, object", false)
             .done();
-        
-        type = type.toLowerCase()
+
+        type = type.toLowerCase();
         if (options.times !== undefined) {
             var timeStack = [];
         }
 
-        let thisEls = this.elements
-        let fn
+        let thisEls = this.targets;
+        let fn;
 
         to((root, idx) => {
             fn = function (evt) {
@@ -1732,7 +1731,9 @@ var AUX = (function () {
                                     timeStack.indexOf(timeStack[i]),
                                     1
                                 );
-                                timeStack.length <= 0 ? (timeStack = null) : null;
+                                timeStack.length <= 0
+                                    ? (timeStack = null)
+                                    : null;
                             }
                             break;
                         }
@@ -1740,20 +1741,23 @@ var AUX = (function () {
                 }
 
                 //// Hanlder
-                handler(new Res({
-                    i: idx,
-                    item: this,
-                    itemList: thisEls
-                }), evt);
+                handler(
+                    new ItemGetters({
+                        i: idx,
+                        item: this,
+                        itemList: thisEls,
+                    }),
+                    evt,
+                    idx
+                );
             };
-
 
             // Adicionar um contador para cada elemento
             if (options.times !== undefined) {
                 timeStack.push({
                     target: root,
                     count: 0,
-                    fn:fn
+                    fn: fn,
                 });
             }
 
@@ -1767,7 +1771,7 @@ var AUX = (function () {
             });
 
             root.addEventListener(type, fn, options);
-        }, this.elements);
+        }, this.targets);
 
         return this;
     };
@@ -1806,27 +1810,29 @@ var AUX = (function () {
      * ----
      * @example
      * .events({
-     *      click(item, evt){...},
+     *      click(get, event, i){...},
      *      mouseOver(item, evt){...}
      * })
      *
      * .events({
-     *      click(item, evt){...}
+     *      click(get, event, i){...}
      * }, {times: 3}) // Dispara o evento somente 3 vezes
      *
      * .events({
-     *      click(item, evt){...}
+     *      click(get, event, i){...}
      * }, {removeStack: true}) // Adiciona o ouvinte à uma pilha de espera de remoção.
      */
     AUX.prototype.events = function (listeners, options = {}) {
         __.err("AUX.events")
-            .to(listeners, "object").isVoid(listeners)
-            .to(options, "object", false).done()
+            .to(listeners, "object")
+            .isVoid(listeners)
+            .to(options, "object", false)
+            .done();
         let evtKeys = Object.keys(listeners);
         // Função ouvinte real
         let fn;
-        let x = {}
-        let thisEls = this.elements
+        let x = {};
+        let thisEls = this.targets;
         if (options.times !== undefined) {
             var timeList = {};
         }
@@ -1844,11 +1850,15 @@ var AUX = (function () {
                         timeList[idx][evtKeys[i]].count++;
                     }
 
-                    listeners[evtKeys[i]](new Res({
-                        i: idx,
-                        item: this,
-                        itemList: thisEls
-                    }), evt);
+                    listeners[evtKeys[i]](
+                        new ItemGetters({
+                            i: idx,
+                            item: this,
+                            itemList: thisEls,
+                        }),
+                        evt,
+                        idx
+                    );
 
                     if (
                         options.times !== undefined &&
@@ -1887,9 +1897,9 @@ var AUX = (function () {
 
                 root.addEventListener(x.name, fn, options);
             }
-        }, this.elements);
-        
-        x = null
+        }, this.targets);
+
+        x = null;
         return this;
     };
 
@@ -1898,10 +1908,10 @@ var AUX = (function () {
      * * Remove um ouvinte de evento previamente registrado e adicionado à *`pilha de espera de remoção`*.
      * > **`Nota:`** Ouvintes de eventos só são removíveis com este método se foram adicionados com *`AUX.on()`* ou *`AUX.events()`*, os mesmos só são removíveis com este método se estiverem na *`pilha de remoção`* previamente definidos nos parâmetros *`options.removeStack`* dos métodos de inserção de eventos.
      * -----
-     * @param {string} type
+     * @param {EventType} type
      * * Uma *`string`* que representa o tipo do evento a ser removido.
      * ----
-     * @param {HandlerFunction} handler
+     * @param {Function} listenerFunction
      * * Uma referência a um ouvinte de evento ligado ao tipo do evento fornecido. Podendo ser a função que captura o evento, ou uma *`string`* que representa o nome da função.
      * > **`Nota:`** Só é recomendável usar os nomes ao invés da própria função como referência quando a função foi declarada imediatamente no método *`AUX.on()`* (*`funciona apenas com função nomeada`*) ou como um método direto de um objeto em *`AUX.events()`*.
      * ----
@@ -1914,10 +1924,14 @@ var AUX = (function () {
      * .removeEvent("click", myClickFunc)
      * .removeEvent("mouseenter", "mouseEnter")
      */
-    AUX.prototype.removeEvent = function (type, handler, options = {}) {
+    AUX.prototype.removeEvent = function (
+        type,
+        listenerFunction,
+        options = {}
+    ) {
         __.err("AUX.removeEvent")
             .to(type, "string")
-            .to(handler, "function")
+            .to(listenerFunction, "function")
             .to(options, "object, boolean", false)
             .expectObj(options, {
                 capture: "boolean",
@@ -1936,8 +1950,8 @@ var AUX = (function () {
                         // Buscar lista de ouvintes
                         for (let list of ref.list) {
                             if (
-                                list.handler === handler ||
-                                handler === list.handler.name
+                                list.handler === listenerFunction ||
+                                listenerFunction === list.handler.name
                             ) {
                                 // Remoção do ouvinte
                                 root.removeEventListener(
@@ -1967,7 +1981,7 @@ var AUX = (function () {
                     }
                 }
             }
-        }, this.elements);
+        }, this.targets);
         return this;
     };
 
@@ -1989,21 +2003,22 @@ var AUX = (function () {
      * * Executa uma função para cada irmão obtido.
      * ----
      * @example
-     * .siblings("next", function(){...})
+     * .siblings("next", function(get, i){...})
      *
-     * .siblings(2, function(){...})
+     * .siblings(2, function(get, i){...})
      *
-     * .siblings(-2, function(){...})
+     * .siblings(-2, function(get, i){...})
      *
-     * .siblings(".foo", function(){...})
+     * .siblings(".foo", function(get, i){...})
      */
     AUX.prototype.siblings = function (refKey, handler) {
         __.err("AUX.siblings")
+            .isWindow(this.targets)
             .to(refKey, "string, number")
             .to(handler, "function")
             .done();
-        
-        let x = {}
+
+        let x = {};
         to((root) => {
             x.res = [];
             x.siblingList = [...root.parentNode.children];
@@ -2043,27 +2058,26 @@ var AUX = (function () {
             }
 
             to((item, i) => {
-                if (item !== undefined && item !== null) {
-                    handler(new Res({
+                handler(
+                    new ItemGetters({
                         i: i,
-                        item: item,
+                        item: item || null,
                         itemList: x.res,
-                        root: root,
-                        rootList: this.elements
-                    }));
-                }
-
+                        target: root,
+                        targetList: this.targets,
+                    }),
+                    i
+                );
             }, x.res);
+        }, this.targets);
 
-        }, this.elements);
-        
-        x = null
+        x = null;
         return this;
     };
 
     ////////// .closest /////////////////////
     /**
-     * * Percorre o elemento e seus ancestarias (em direção à raiz do documento) até encontrar um ancestral mais próximo que corresponde ao seletor CSS especificado em *`selectors`* e executa uma função *`callback`* para o resultado. Se nenhum resultado for obtido nenhuma operação ocorre. Se o seletor passado corresponder ao próprio elemento ele será obtido como resultado.
+     * * Percorre o elemento e seus ancestarias (em direção à raiz do documento) até encontrar um ancestral mais próximo que corresponde ao seletor CSS especificado em *`selectors`* e executa uma função *`callback`* para o resultado. Se nenhum elemento for encontrado o resultado é um *`null`*. Se o seletor passado corresponder ao próprio elemento ele será obtido como resultado.
      * * Nota: A pesquisa termina quando o primeiro resultado for encontrado, logo apenas um elemento ancestral é obtido. Para obter todos os nós acestrais a um elemento usar *`AUX.ancestors`*.
      * ------
      * @param {string} selectors
@@ -2073,55 +2087,57 @@ var AUX = (function () {
      * * Executa uma função para o primeiro resultado da busca na árvore de nós ancestrais.
      * -----
      * @example
-     * .closest(".parent-2", function(){...})
+     * .closest(".parent-2", function(get, i){...})
      */
     AUX.prototype.closest = function (selectors, handler) {
         __.err("AUX.closest")
+            .isWindow(this.targets)
             .to(selectors, "string")
             .to(handler, "function")
             .done();
-        let res
+
         to((root, i) => {
-            res = root.closest(selectors);
-            if (res) {
-                handler(new Res({
+            handler(
+                new ItemGetters({
                     i: i,
-                    item: res,
-                    itemList: [res],
-                    root: root,
-                    rootList: this.elements
-                }));
-            }
-        }, this.elements);
-        
-        res = null
+                    item: root.closest(selectors),
+                    itemList: [root.closest(selectors)],
+                    target: root,
+                    targetList: this.targets,
+                })
+            );
+        }, this.targets);
+
         return this;
     };
 
     //////////// .parent ////////////////
     /**
-     * * Executa uma função *`callback`* para o elemento pai do elemento atual. Se um pai não existir ou não form um DOM nenhuma operação ocorre.
+     * * Executa uma função *`callback`* para o elemento pai do elemento atual. Se um pai não existir ou não form um DOM o resultado é um *`null`*.
      * -----
      * @param {HandlerFunction} handler
      * * Uma função de chamada de retorno caso haja um resultado.
      * -----
      * @example
-     * .parent(function(){...})
+     * .parent(function(get, i){...})
      */
     AUX.prototype.parent = function (handler) {
-        __.err("AUX.parent").to(handler, "function").done();
-        
+        __.err("AUX.parent")
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .done();
+
         to((root, i) => {
-            if (root.parentElement) {
-                handler(new Res({
+            handler(
+                new ItemGetters({
                     i: i,
-                    item: root.parentElement,
-                    itemList: [root.parentElement],
-                    root: root,
-                    rootList: this.elements
-                }));
-            }
-        }, this.elements);
+                    item: root.parentElement || null,
+                    itemList: [root.parentElement || null],
+                    target: root,
+                    targetList: this.targets,
+                })
+            );
+        }, this.targets);
 
         return this;
     };
@@ -2129,37 +2145,42 @@ var AUX = (function () {
     //////////// .ancestors //////////////
     /**
      * * Percorre todos os ancestrais (em direção à raiz do documento), começando pelo elemento pai, e executa uma função *`callback`* para cada ancestral obtido.
-     * * Se o elemento não possuir nenhum ancestral (como um pai, avô, etc...) nenhuma operação será executada.
+     * * Se o elemento não possuir nenhum ancestral (como um pai, avô, etc...) o resultado é *`null`*.
      * ------
      * @param {HandlerFunction} handler
      * * Uma função para cada elemento ancestral ao elemento atual.
      *  ------
      * @example
-     * .ancestors(function(){...})
+     * .ancestors(function(get, i){...})
      */
     AUX.prototype.ancestors = function (handler) {
-        __.err("AUX.ancestors").to(handler, "function").done();
-        let parent
-        let i = 0
+        __.err("AUX.ancestors")
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .done();
+        let parent;
+        let i = 0;
         to((root) => {
             parent = root;
             while (true) {
                 parent = parent.parentElement;
+                handler(
+                    new ItemGetters({
+                        i: i,
+                        item: parent,
+                        itemList: [parent],
+                        target: root,
+                        targetList: this.targets,
+                    })
+                );
                 if (!parent) {
                     break;
                 }
-                handler(new Res({
-                    i: i,
-                    item: parent,
-                    itemList: [parent],
-                    root: root,
-                    rootList: this.elements
-                }));
-                i++
+                i++;
             }
-        }, this.elements);
-        
-        parent = null
+        }, this.targets);
+
+        (parent = null), (i = null);
         return this;
     };
 
@@ -2167,7 +2188,7 @@ var AUX = (function () {
     /**
      * * Percorre o ramo de elementos filhos até chegar em um elemento especificado em *`selector`* e, se encontrado, executa uma função *`callback`* para cada elemento do ramo em que a busca passou até chegar nele.
      * * O última elemento do ramo é o elemento encontrado em *`selector`*.
-     * > * **Nota** - Se o elemento especificado em *`selector`* não existir ou não fazer parte do ramo de elementos dentro do elemento principal um caminho não pode ser traçado e nenhuma operação é executada.
+     * > * **Nota** - Se o elemento especificado em *`selector`* não existir ou não fazer parte do ramo de elementos dentro do elemento principal um caminho não pode ser traçado e o resultado obtido é um *`null`*.
      * -------
      * @param {string | HTMLElement} selector
      * * Uma string que represente um seletor CSS que aponte para um único elemento existente dentro do elemento principal ou um elemento HTML existente dentro do mesmo.
@@ -2176,15 +2197,16 @@ var AUX = (function () {
      * * Uma função para cada elemento que compõe o caminho até chegar ao destino.
      * -----
      * @example
-     * .childPath("#node-10", function(){...})
+     * .childPath("#node-10", function(get, i){...})
      */
     AUX.prototype.childPath = function (selector, handler) {
         __.err("AUX.childPath")
+            .isWindow(this.targets)
             .to(selector, "string, HTMLElement")
             .to(handler, "function")
             .done();
-        
-        let x = {}
+
+        let x = {};
         to((root) => {
             x.pathList = [];
 
@@ -2208,19 +2230,74 @@ var AUX = (function () {
             //Percorrer lista do fim para o início
             for (let i = 0; i < x.pathList.length; i++) {
                 x.res = x.pathList[x.pathList.length - i - 1];
-                if (x.res) {
-                    handler(new Res({
+                handler(
+                    new ItemGetters({
                         i: i,
-                        item: x.res,
+                        item: x.res || null,
                         itemList: x.pathList,
-                        root: root,
-                        rootList: this.elements
-                    }));
-                }
+                        target: root,
+                        targetList: this.targets,
+                    })
+                );
             }
-        }, this.elements);
+        }, this.targets);
 
-        x = null
+        x = null;
+        return this;
+    };
+
+    ///////////// .click ///////////////
+    /**
+     * * Simula o clique do mouse em um elemento HTML. Se o elemento possuir um ouvinte de evento o mesmo também será disparado.
+     * ----
+     * @example
+     * .click()
+     */
+    AUX.prototype.click = function () {
+        to((root) => {
+            root.click();
+        }, this.targets);
+
+        return this;
+    };
+
+    //////////// .focus ////////////
+    /**@typedef {{preventScroll: boolean, focusVisible: boolean}} FocusOptions */
+    /**
+     * * Define o foco no elemento se ele puder ser focado.
+     *-----
+     * @param {FocusOptions} options
+     * *`(opcional)`*
+     * * Um objeto opcional para controlar aspectos do processo de focagem. Pode conter as seguintes propriedades:
+     *
+     * > * **`preventScroll:`** Um valor booleano que indica se o navegador deve ou não rolar o documento para exibir o elemento recém-focado. Um valor false (*`padrão`*) significa que o navegador rolará o elemento para visualização após focalizá-lo. Se definido como true, nenhuma rolagem ocorrerá.
+     *
+     * > * **`focusVisible:`** Um valor booleano que deve ser definido *`true`* para forçar a indicação visível de que o elemento está em foco. Por padrão, ou se a propriedade não for true, um navegador ainda poderá fornecer uma indicação visível se determinar que isso melhoraria a acessibilidade para os usuários.
+     * -----
+     * @example
+     * .focus()
+     * .focus({ preventScroll: false, focusVisible: true })
+     */
+    AUX.prototype.focus = function (options = {}) {
+        to((root) => {
+            root.focus(options);
+        }, this.targets);
+
+        return this;
+    };
+
+    ////////// .focusOff ///////////
+    /**
+     * * Remove o foco do teclado do elemento focado.
+     * -----
+     * @example
+     * .focusOff()
+     */
+    AUX.prototype.focusOff = function () {
+        to((root) => {
+            root.blur();
+        }, this.targets);
+
         return this;
     };
 
