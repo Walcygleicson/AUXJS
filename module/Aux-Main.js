@@ -1650,7 +1650,33 @@ var AUX = (function () {
     };
 
     ///////////// .appendSiblings //////////////////
-    AUX.prototype.appendSiblings = function (newSiblings, options = {}) {};
+    AUX.prototype.appendSiblings = function (newSiblings, options = {}) {
+        let err = __.err("AUX.appendSiblings")
+        err.to(newSiblings, t.ELREF).to(options, "object, function").done()
+
+        newSiblings = __.ex(newSiblings, err)
+        let x  = {}
+        options = {
+            position: options.position ?? null,
+            handler: __.type(options) == "function" ? options : options.handler,
+        };
+        x.childList = [...this.targets[0].parentElement.children]
+        to((sibling, i) => {
+            if (options.handler) {
+                
+                options.handler(new ItemGetters({
+                    i: i,
+                    item: sibling,
+                    itemList: newSiblings,
+                    target: this.targets[0],
+                    targetList: this.targets
+                }), i)
+            }
+            //Obter o elemento filho referência para o insertBefore
+            x.nodeRef = __.indexRef(options.position, x.childList);
+            this.targets[0].parentElement.insertBefore(sibling, x.nodeRef);
+        }, newSiblings)
+    };
 
     ///////////// .removeSiblings //////////////////
     AUX.prototype.removeSiblings = function (siblings, handler = Function) {};

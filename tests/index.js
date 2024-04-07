@@ -34,7 +34,12 @@ function hand(e, ev, i) {
 }
 
 
-my.exchange(created).
+inpt.appendSiblings(["#ch-0", created], {
+   position: "#x-0",
+   handler(e, i) {
+      this.position = "#x-" + (i + 1)
+   }
+})
 
 
 
