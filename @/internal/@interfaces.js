@@ -5,7 +5,7 @@ import __ from "./@utils.js"
  * @typedef {ItemGetters} ItemGetters
  */
 export class ItemGetters {
-    constructor({ item, itemList, i, target, targetList, substitute }) {
+    constructor({ item, itemList, i, target, targetList, substitute, options}) {
         /**
          * * Obtém o elemento que está sendo operado na iteração atual.
          * @type {HTMLElement | window | DocumentFragment}
@@ -82,6 +82,8 @@ export class ItemGetters {
             __.type(item) == "documentFragent" || item === window
                 ? null
                 : substitute || null;
+        
+        this.options = options
     }
 
     /** * Obtém o objeto *`DOMRect`* do *`item`* atual. */
@@ -304,6 +306,11 @@ export class ItemGetters {
     get lastChild() {
         return this.item === window ? null : this.item.lastElementChild;
     }
+
+    get width() {
+        return this.set.get().width
+    }
+    
 }
 
 

@@ -1,4 +1,4 @@
-
+import { __ as config } from "../config/@config.js"
 
 /**
  * @private
@@ -381,21 +381,23 @@ __.err = function (thisName) {
      * @returns 
      */
     fn.invalidSelector = function (handlerExeption, selector, param=1) {
-        try {
-            handlerExeption()
-        } catch (_) {
+        if (config.LAUNCH_INVALID_SELECTOR_ERROR) {
             try {
-                ERR.mount({
-                    errValue: selector,
-                    errMsg: "invalidSelector",
-                    errArg: arg,
-                    errTarget: arg.list[param - 1],
-                    errName: "Seletor Inválido",
-                });
-
-            } catch (err) {
-                ERR.launch(err)
-            }
+                handlerExeption()
+            } catch (_) {
+                try {
+                    ERR.mount({
+                        errValue: selector,
+                        errMsg: "invalidSelector",
+                        errArg: arg,
+                        errTarget: arg.list[param - 1],
+                        errName: "Seletor Inválido",
+                    });
+    
+                } catch (err) {
+                    ERR.launch(err)
+                }
+            } 
         }
 
         return this
@@ -582,6 +584,137 @@ __.mapLoop = function (amount, handler) {
 //Função que captaliza uma string
 __.capitalize = function (string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+/**
+ * @typedef {object} extractOptions
+ * @property {__.err} [err] Recebe o objeto de erro do método.
+ * @property {number} [param] O número do parâmetro do erro.
+ * @property {Array<HTMLElement> | HTMLElement | document} [root] Uma raiz de busca para os elementos.
+*/
+
+/**
+ * * Obtém elementos e retorna-os em um array.
+ * 
+ * @param {Array} elements Os elementos.
+ * @param {extractOptions} [options] Opções de erros e busca.
+ */
+__.extractElements = function (elements, options = {}) {
+    if (elements === window) {return elements}
+    options = {
+        err: options.err || null,
+        param: options.param || 1,
+        root: options.root || document,
+        target: options.target || null
+    }
+
+    let res = []
+    let temp = []
+
+    if (["nodeList", "HTMLCollection"].includes(this.type(elements))) {
+        elements = [...elements]
+    } else if (this.type(elements) == "object") {
+        elements = Object.values(elements)
+    } else if(["number", "string", "HTMLElement"].includes(this.type(elements))) {
+        elements = [elements]
+    }
+    console.log(elements)
+    
+    for(let i = 0; i < elements.length; i++){
+        
+        switch (this.type(elements[i])) {
+            case "string":
+
+                //Para busca em document ou elemento
+                if (options.root === document || this.type(options.root) == "HTMLElement") {
+
+                    // Testar erro de seletor iválido (DOMException)
+                    // Se objeto de erro for passado...
+                    if (options.err) {
+                        options.err.invalidSelector(() => {
+                            temp = options.root.querySelectorAll(elements[i]) || null
+                            
+                        }, elements[i], options.param)
+                    } else {
+                        temp = options.root.querySelectorAll(elements[i]) || null
+                    }
+
+                    if(temp){res.push(...temp)}
+                } else if (this.type(options.root) == "array") {
+                    res.push(...options.root.filter((el) => {
+                        if(el.matches(elements[i])){return el}
+                    }))
+                }
+                break
+                
+            case "number":
+                if (this.type(options.root) == "HTMLElement") {
+                    options.root = [...options.root.children]
+                }
+                
+
+                if (this.type(options.root) == "array") {
+                    res.push(...options.root.filter((el, ii) => {
+                        if(ii ==  elements[i]){ return el }
+                    }))
+                }
+
+                break
+            
+            case "HTMLElement":
+                if (this.type(options.root) == "array") {
+                    res.push(...options.root.filter((el) => {
+                        if(el === elements[i]){return el}
+                    }))
+                } else {
+                    res.push(elements[i])
+                }
+
+                
+        }
+    }
+
+    temp = null
+    return res
+}
+
+/**
+ * Adiciona e remove uma referência de contador quantidade execução
+ */
+__.eventMaxCall = {
+    /**
+     * * Adiciona uma referencia ao elemento e um contador.
+     */
+    add({ options, target, fn, timeStack }) {
+        if (options.max !== undefined) {
+            timeStack.push({
+                target: target,
+                count: 0,
+                fn: fn,
+            });
+        }
+    },
+    /**
+     * * Atualiza o contador. Se um contador chegar no máximo o evento e referência é removido. 
+     */
+    update({options, timeStack, target, eventName}) {
+        if (options.max !== undefined && timeStack !== null) {
+            for (let i = 0; i < timeStack.length; i++) {
+                if (timeStack[i].target === target) {
+                    timeStack[i].count++;
+                    if (timeStack[i].count >= options.max) {
+                        // Remover ouvinte ao encerrar options.times
+                        target.removeEventListener(eventName, timeStack[i].fn);
+
+                        // Deletar referencia do contador
+                        timeStack.splice(timeStack.indexOf(timeStack[i]), 1);
+                        timeStack.length <= 0 ? (timeStack = null) : null;
+                    }
+                    break;
+                }
+            }
+        }
+    }
 }
 
 //-----> Auxilar de __.err <----------

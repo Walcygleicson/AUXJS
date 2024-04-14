@@ -329,4 +329,11 @@ var aux = AUX("html")
  * @property {boolean} [once] - Um valor booleano que indica que os ouvintes devem ser invocados no máximo uma vez após ser adicionado.
  * @property {boolean} [passive] - Um valor booleano que, se true, indica que a função/método especificada para o ouvinte nunca chamará *`preventDefault()`*.
  * @property {AbortSignal} [signal] - Um *`AbortSignal`*. O souvintes serão removidos quando o método *`AbortSignal`* do objeto fornecido *`abort()`* for chamado.
+ * @property {boolean} [removeStack] - Um boolean que define se o ouvinte de evento será removido posteriormente. Se *`true`* uma referência ao ouvinte e seu evento será adicionado em uma *`pilha de espera de remoção`*.
+ * @property {number} [max] - Um número que define a quantidade máxima de vezes que o ouvinte de evento será invocado após ser adicionado. Após exceder o valor passado o ouvinte é automaticamente removido.
+ * 
+ * @typedef {object} MouseHoldOptions
+ * @property {"left" | "midle" | "right" | "any"} [button] - Uma string key que represente um botão do mouse.
+ * @property {number} [delay] - Um número que define um intervalo de execução da *`callback function`* enquanto o mouse estiver sendo segurado.
+ * @property {HandlerFunction} [mouseUp] - Executa uma função quando o mouse for solto.
  */

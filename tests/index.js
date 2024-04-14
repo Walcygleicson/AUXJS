@@ -1,5 +1,10 @@
 import __ from "../@/internal/@utils.js";
 import AUX from "../module/Aux-Main.js";
+import { __ as config } from "../@/config/@config.js";
+import { ItemGetters } from "../@/internal/@interfaces.js";
+
+
+
 
 const one = document.getElementById("one");
 const two = document.getElementById("two");
@@ -27,24 +32,7 @@ const bro = AUX("#btn, .two, #ch-0");
 const um = AUX(one)
 const inpt = AUX("input[name='nome']")
 const dois = AUX(two)
-const A = AUX("#ch-a > div")
-let cont = 0
-function hand(e, ev, i) {
-   console.log(e)
-}
+const child = AUX("#ch-a")
 
 
-inpt.appendSiblings(["#ch-0", created], {
-   position: "#x-0",
-   handler(e, i) {
-      this.position = "#x-" + (i + 1)
-   }
-})
-
-
-
-
-
-
-
-
+btn.mouseHold((e)=>{console.log(e)}, {delay: 2, max: 5, button: "any"})

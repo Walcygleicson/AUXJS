@@ -16,6 +16,8 @@ import { ItemGetters } from "../@/internal/@interfaces.js";
  * @typedef {import("../@/docs/@Aux-Typedef.js").EventOptions} EventOptions
  * @typedef {import("../@/docs/@Aux-Typedef.js").EventType} EventType
  * @typedef {import("../@/docs/@Aux-Typedef.js").SiblingKeys} SiblingKeys
+ * @typedef {import("../@/docs/@Aux-Typedef.js").PositionReference} PositionReference
+ * @typedef {import("../@/docs/@Aux-Typedef.js").MouseHoldOptions} MouseHoldOptions
  */
 
 
@@ -344,6 +346,69 @@ var AUX = (function () {
         return this;
     };
 
+    /////// .get ////////////////////
+    /**
+     * * Provém de propriedades *`getters`* que fornecem informações sobre o elemento alvo especificado. Se não for expecificado um elemento e houver mais de um elemento na lista de manipulação o elemento alvo usado será o primeiro.
+     * -----
+     * @param {HTMLElement|number|string} target
+     * *`(opcional)`*
+     * * Uma referência a um elemento alvo para a obtenção de informações.
+     * -----
+     * @example
+     * .get() => {...}
+     * .get(1) => {...}
+     * .get(".foo") => {...}
+     */
+    AUX.prototype.get = function (target = 0) {
+        target = __.indexRef(target, this.targets);
+        const se = (handler, op) => {
+            if (target) {
+                return handler();
+            }
+
+            return null;
+        };
+
+        return Object.freeze({
+            /** * Obtém a largura do elemento em pixels */
+            get width() {
+                return Number(getComputedStyle(target).width.replace("px", ""));
+            },
+
+            /** * Obtém a altura do elemento em pixels */
+            get height() {
+                return se(() => {
+                    return Number(
+                        getComputedStyle(target).height.replace("px", "")
+                    );
+                });
+                //return Number(getComputedStyle(target).height.replace("px", ""));
+            },
+
+            /** * Obtém um objeto de propriedades de estilos computados do elemento */
+            get style() {
+                return getComputedStyle(target);
+            },
+
+            /** * Obtém o nome de tag do elemento @returns {string} */
+            get tag() {
+                return target.tagName.toLowerCase();
+            },
+
+            /** * Verifica se o elemento está visível na janela @returns {boolean} */
+            get visibility() {
+                return target.checkVisibility({
+                    checkOpacity: true,
+                    checkVisibilityCSS: true,
+                });
+            },
+
+            get focused() {
+                return target === document.activeElement;
+            },
+        });
+    };
+
     /////////// .style ///////////////////////////
     /**
      * * Define as propriedades de estilo do elemento. O estilo é aplicado inline.
@@ -401,6 +466,152 @@ var AUX = (function () {
             });
         }, this.targets);
         propName = null;
+        return this;
+    };
+
+    /////////// .mouseHold ////////////////
+    /**
+     * * Evento executa uma funcção de retorno de chamada repetidamente enquanto a ação de segurar o mouse sobre o elemento estiver sendo aplicada. Por padrão o botão *`left`* do mouse dispara o evento, podendo ser configurado em *`options.button`*.
+     * * A função *`callback`* será executada em um intervalo de *`10`* milissegundos até que o botão seja solto. Este valor pode ser configurado em *`options.delay`*.
+     * > * *`Nota:`* Opcionalmente pode executar uma segunda função *`callback`* para quando o mouse for solto, passando-o em *`options`*.
+     * > * *`Nota:`* *`AUX.mouseHold()`* adiciona o evento *`mousedown`* no elemento para trabalho interno, logo, o mesmo pode ser removido com *`AUX.removeEvent()`* especificando o evento *`mousedown`* ou *`mousehold`*. Apenas o evento que é disparado quando o mouse é solto não precisa ser removido, pois este é removido automaticamente.
+     * ----
+     * @param {EventHandlerFunction} handler
+     * * Uma função de retorno de chamada a ser executada enquanto o botão do mouse estiver sendo pressionado.
+     * -----
+     * @param {EventOptions | MouseHoldOptions | HandlerFunction} options
+     * *`(opcional)`*
+     * * Uma função para quando o mouse for solto ou um objeto que especifica características do evento e ações adicionais. Recebe as propriedades padrões do parâmetro *`options`* de *`.addEventListener()`* e as seguintes propriedades paralelas:
+     *
+     * > * **`mouseUp:`** Uma segunda função *`callback`* que é executada uma vez quando o mouse for solto. Este ouvinte é removido automatiamente quando a operação terminar.
+     *
+     * > * **`button:`** Uma string que represente o nome de um botão do mouse. Quando espeficicado este botão será responsável por disparar o evento. As chaves disponíveis são:
+     *
+     * > > *`"left"`* - (padrão) Botão esquerdo do mouse.
+     *
+     * > > *`"midle"`* - Botão do meio do mouse.
+     *
+     * > > *`"right"`* - Botão direito do mouse.
+     *
+     * > > *`"any"`* - Qualquer um dos botões disponíveis no mouse.
+     *
+     * > * **`delay:`** Um número que define o intervalo de execução da função *`callback`* passada. O valor padrão é *`10`* e se qualquer valor menor que este for passado o valor usado será *`10`*.
+     *
+     * > * **`removeStack:`** Um boolean que indica se este evento será removido futuramente. Se sim, o evento é adicionado em uma *`pilha de espera de remoção`* e pode ser removido com o método *`AUX.removeEvent()`*. Se a função *`callback`* passada for anônima, mesmo com *`options.removeStack: true`* o ouvinte não poderá ser adicionado à pilha pois precisa possuir uma referência ou no mínimo um nome para a remoção posterior.
+     *
+     * > * **`times:`** Um número que indica quantas vezes o evento deve ser disparado após ser adicionado. Após a quantidade máxima de disparos determinada for atingida o evento será automaticamente removido. Nota: Este evento não poderá ser adicionado à *`pilha de espera de remoção`* mesmo com *`options.removeStack`* definido.
+     * ---
+     * @example
+     * .mouseHold(function(get, evt, i){...})
+     * .mouseHold(function(get, evt, i){...}, function(get, evt, i){...}) // Executa uma segunda função para quando o mouse for solto.
+     * .mouseHold(function(get, evt, i){...}, {button: "right"})
+     * .mouseHold(function(get, evt, i){...}, {
+     *      button: "right",
+     *      delay: 1000,
+     *      mouseUp(get, evt, i){...}
+     * })
+     *
+     */
+    AUX.prototype.mouseHold = function (handler, options = {}) {
+        __.err("AUX.mouseHold")
+            .isWindow(this.targets)
+            .to(handler, "function")
+            .to(options, "object, function, boolean")
+            .expectObj(options, {
+                button: "string",
+                max: "number",
+                once: "boolean",
+                delay: "number",
+                removeStack: "boolean",
+                mouseUp: "function",
+                passive: "boolean",
+                capture: "boolean",
+                signal: "abortSignal"
+
+            })
+            .done();
+
+        if (__.type(options) == "function") {
+            options.mouseUp = options = { mouseUp: options };
+        }
+
+        // Criar variável de contador de chamada
+        if (options.max !== undefined) {
+            var timeStack = [];
+        }
+        
+        let fn;
+        let x = {this: this};
+        let interval
+        to((root, i) => {
+
+            switch (options.button) {
+                case "midle":
+                    options.button = 1;
+                    break;
+                case "right":
+                    options.button = 2;
+                    break;
+                default:
+                    options.button !== "any" ? (options.button = 0) : null;
+            }
+
+            fn = function (e) {
+                // Atualizar contador e/ou remover evento
+                __.eventMaxCall.update({
+                    eventName: "mousedown",
+                    options: options,
+                    target: this,
+                    timeStack: timeStack
+                })
+
+                if (e.button === options.button || options.button === "any") {
+                    x.res = new ItemGetters({
+                        i: i,
+                        item: root,
+                        itemList: x.this.targets,
+                        options: options,
+                    });
+
+                    // Evento mouseUp
+                    document.addEventListener("mouseup", function evt() {
+                        clearInterval(interval); // Limpar intervalo
+                        interval = null
+                        document.removeEventListener("mouseup", evt);
+
+                        // Se uma função for passada em options executar quando o mouse for solto.
+                        if (options.mouseUp) {
+                            options.mouseUp(x.res, e, i);
+                        }
+                    });
+
+                    // Executar função handler enquanto o moouse for segurado.
+                    interval = setInterval(() => {
+                        handler(x.res, e, i);
+                    }, options.delay || 1);
+                }
+            };
+
+            // Adicionar um contador para cada elemento
+            __.eventMaxCall.add({
+                fn: fn,
+                options: options,
+                target: root,
+                timeStack: timeStack
+            })
+
+            // Adicionar à pilha de remoção.
+            addToRemoveStack({
+                fn: fn,
+                type: "mousedown",
+                root: root,
+                handler: handler,
+                options: options,
+            });
+
+            root.addEventListener("mousedown", fn, options);
+        }, this.targets);
+
         return this;
     };
 
@@ -864,52 +1075,52 @@ var AUX = (function () {
      * @param {ElementReference} selectors Um elemento HTML ou Seletor CSS válido que aponte para um elemento existente no DOM para ser clonado.
      * @param {{}} options
      */
-    AUX.prototype.appendClones = function (selectors, options = {}) {
-        let err = __.err("AUX.appendClones");
-        err.to(selectors, t.ELREF)
-            .isVoid(selectors)
-            .to(options, "function, object", false)
-            .expectObj(options, {
-                amount: "number",
-                position: t.IDXREF,
-                handler: "function, null",
-            })
-            .done();
+    // AUX.prototype.appendClones = function (selectors, options = {}) {
+    //     let err = __.err("AUX.appendClones");
+    //     err.to(selectors, t.ELREF)
+    //         .isVoid(selectors)
+    //         .to(options, "function, object", false)
+    //         .expectObj(options, {
+    //             amount: "number",
+    //             position: t.IDXREF,
+    //             handler: "function, null",
+    //         })
+    //         .done();
 
-        x.isDone = false;
+    //     x.isDone = false;
 
-        to((root) => {
-            x.childList = [...root.children];
-            for (let i = 0; i < options.amount; i++) {
-                x.clone = element.cloneNode(true);
+    //     to((root) => {
+    //         x.childList = [...root.children];
+    //         for (let i = 0; i < options.amount; i++) {
+    //             x.clone = element.cloneNode(true);
 
-                //Erro de propriedades inesperada
-                // err.expectObj(options, {
-                //     amount: "number",
-                //     position: t.IDXREF,
-                //     handler: "function, null",
-                //     root: t.IDXREF,
-                // });
-                //Função done()
-                x.done = () => {
-                    //Obter o elemento filho referência para o insertBefore
-                    x.nodeRef = __.indexRef(options.position, x.childList);
-                    x.isDone = true; //Avisar que esta função foi executada
-                    root.insertBefore(x.clone, x.nodeRef);
-                };
+    //             //Erro de propriedades inesperada
+    //             // err.expectObj(options, {
+    //             //     amount: "number",
+    //             //     position: t.IDXREF,
+    //             //     handler: "function, null",
+    //             //     root: t.IDXREF,
+    //             // });
+    //             //Função done()
+    //             x.done = () => {
+    //                 //Obter o elemento filho referência para o insertBefore
+    //                 x.nodeRef = __.indexRef(options.position, x.childList);
+    //                 x.isDone = true; //Avisar que esta função foi executada
+    //                 root.insertBefore(x.clone, x.nodeRef);
+    //             };
 
-                //Callback function
-                if (options.handler) {
-                    options.handler(2, x.done);
-                } else {
-                    x.done();
-                }
-            }
-        }, this.elements);
+    //             //Callback function
+    //             if (options.handler) {
+    //                 options.handler(2, x.done);
+    //             } else {
+    //                 x.done();
+    //             }
+    //         }
+    //     }, this.elements);
 
-        clear(x);
-        return this;
-    };
+    //     clear(x);
+    //     return this;
+    // };
 
     /////// .createChilds /////////////////
     /**
@@ -1650,46 +1861,67 @@ var AUX = (function () {
     };
 
     ///////////// .appendSiblings //////////////////
+    /**
+     * * Adiciona novos elementos irmãos ao elemento principal se este for filho de um nó.
+     *-----
+     * @param {ElementSelector} newSiblings
+     * * Os novos elementos irmão deste.
+     * -----
+     * @param {HandlerFunction | {handler: HandlerFunction, position: PositionReference}} options
+     * *`(opcional)`*
+     * * Executa função *`callback`* ou recebe objeto com as seguintes propriedades opcionais:
+     * -----
+     * > * **`handler:`** Uma função de retorno de chamada.
+     *
+     * > * **`position:`** Uma referência que indique a posição em que os clones gerados serão inseridos na lista de elementos filhos dos alvos. Pode ser um número de índice, uma string que representa um seletor CSS válido que aponte para algum elemento filho ou o próprio elemento como referência de posição.
+     */
     AUX.prototype.appendSiblings = function (newSiblings, options = {}) {
-        let err = __.err("AUX.appendSiblings")
-        err.to(newSiblings, t.ELREF).to(options, "object, function").done()
+        let err = __.err("AUX.appendSiblings");
+        err.to(newSiblings, t.ELREF + ", number")
+            .to(options, "object, function")
+            .done();
 
-        newSiblings = __.ex(newSiblings, err)
-        let x  = {}
+        newSiblings = __.extractElements(newSiblings, { err: err });
+        let x = {};
         options = {
             position: options.position ?? null,
             handler: __.type(options) == "function" ? options : options.handler,
         };
-        x.childList = [...this.targets[0].parentElement.children]
+        x.childList = [...this.targets[0].parentElement.children];
         to((sibling, i) => {
             if (options.handler) {
-                
-                options.handler(new ItemGetters({
-                    i: i,
-                    item: sibling,
-                    itemList: newSiblings,
-                    target: this.targets[0],
-                    targetList: this.targets
-                }), i)
+                options.handler(
+                    new ItemGetters({
+                        i: i,
+                        item: sibling,
+                        itemList: newSiblings,
+                        target: this.targets[0],
+                        targetList: this.targets,
+                        options: options,
+                    }),
+                    i
+                );
             }
             //Obter o elemento filho referência para o insertBefore
             x.nodeRef = __.indexRef(options.position, x.childList);
             this.targets[0].parentElement.insertBefore(sibling, x.nodeRef);
-        }, newSiblings)
+        }, newSiblings);
+
+        (err = null), (x = null);
+        return this;
     };
 
     ///////////// .removeSiblings //////////////////
-    AUX.prototype.removeSiblings = function (siblings, handler = Function) {};
+    AUX.prototype.removeSiblings = function (siblings, handler = Function) {
+        __.err("AUX.removeSiblings")
+            .to(siblings, t.ELREF + ", number")
+            .to(handler, "function")
+            .done();
 
-    ///////////// .replaceSiblings ////////////////
-    AUX.prototype.replaceSiblings = function (
-        oldSiblings,
-        newSiblings,
-        handler = Function
-    ) {};
-
-    /////////// .toggleSiblings ////////////////
-    AUX.prototype.toggleSiblings = function (siblings, element) {};
+        AUX(this.targets).parent((e) => {
+            e.set.removeChilds(siblings, handler);
+        });
+    };
 
     //////////////// .on ////////////////////
     /**

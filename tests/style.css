@@ -4,6 +4,10 @@ body, #super-parent {
     gap: 2em;
 }
 
+:root{
+    --x: 10%
+}
+
 .box {
     border: 1px solid red;
     padding: 2em;
@@ -25,7 +29,7 @@ body, #super-parent {
     gap: 1em;
 }
 
-#btn {
+#btn, #menos {
     position: fixed;
     top: 1em;
     left: 1em;
